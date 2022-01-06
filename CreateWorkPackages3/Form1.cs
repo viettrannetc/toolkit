@@ -71,10 +71,12 @@ namespace CreateWorkPackages3
 			btnLoadDaily.Enabled = true;
 			tabDetailsPlan_btn_pushToToolkit.Enabled = false;
 			tabDetailsPlan_btn_apply_changes.Enabled = false;
+
 			CreateConnectionToSharepoint();
 			GetMetadataFromSharepoint();
+			PullLatestData("13", string.Empty, "32");
 
-			//Load_GanttChart();
+			//ControlExtension.Draggable(label26, true);
 		}
 		~Form1()
 		{
@@ -573,6 +575,32 @@ namespace CreateWorkPackages3
 			_releaseId = int.Parse(selectedReleaseId);
 			var selectedIterationId = Daily_Filter_cbb_Iteration.SelectedItem.GetPropValue("key").ToString();
 
+			//Parallel.Invoke(() =>
+			//{
+			//	try
+			//	{
+			//		_service.GetFeatures(selectedReleaseId, "32");
+
+			//		_service.GetAllocation("32");
+			//		_service.GetAllocationAdjustments("32");
+
+			//		_service.GetUserStories();
+			//		_service.GetWorkpackages(selectedReleaseId, selectedIterationId);
+
+			//		BuildDailyTrack();
+			//		//BuildLocalDataStored();
+			//	}
+			//	catch (Exception exp)
+			//	{
+			//		Log("Error connecting to Sharepoint API: " + exp.Message + "Feature disabled." + "\r\n");
+			//	}
+			//});
+
+			PullLatestData(selectedReleaseId, selectedIterationId, "32");
+		}
+
+		private void PullLatestData(string selectedReleaseId, string selectedIterationId, string selectedTeamId)
+		{
 			Parallel.Invoke(() =>
 			{
 				try
@@ -966,12 +994,15 @@ namespace CreateWorkPackages3
 			}
 		}
 
-		private void AddNewChangesFromWPLevel(int columnIndex, int rowIndex, string property)
+		private void AddNewChangesFromWPLevel(int columnIndex, int rowIndex, string property, string newData = "")
 		{
 			var wpId = int.Parse(tabDetailsPlan_GridView[0, rowIndex].Value.ToString().Split('-')[tabDetailsPlan_GridView[0, rowIndex].Value.ToString().Split('-').Count() - 1].Trim());
 			var currentRowData = _wpItemsLocal.FirstOrDefault(d => d.WPId == wpId);
 			if (currentRowData == null) return;
 
+			var cellNewData = string.IsNullOrEmpty(newData)
+				? tabDetailsPlan_GridView[columnIndex, rowIndex].Value.ToString()
+				: newData;
 			var cellOldData = string.Empty;
 
 			switch (property)
@@ -1001,14 +1032,23 @@ namespace CreateWorkPackages3
 					break;
 				case _column_Iteration:
 					cellOldData = currentRowData.WPIterationName;
+
+					var indexDueDate = 10;
+					var dueDateByIteration = _service._toolkitIterations.FirstOrDefault(i => i.Title == cellNewData);
+					if (dueDateByIteration != null)
+						AddNewChangesFromWPLevel(indexDueDate, rowIndex, tabDetailsPlan_GridView.Columns[10].Name, dueDateByIteration.EndDate.Date.ToShortDateString());
+
 					break;
 				default:
 					break;
 			}
 
-			var cellNewData = tabDetailsPlan_GridView[columnIndex, rowIndex].Value.ToString();
-
-			if (cellOldData == cellNewData) return;
+			if (cellOldData == cellNewData)//remove 			
+			{
+				var unnecesaryChange = _wpItemsLocalChanges.FirstOrDefault(d => d.WPId == wpId && d.Property == property);
+				_wpItemsLocalChanges.Remove(unnecesaryChange);
+				return;
+			}
 
 			var existingChange = _wpItemsLocalChanges.FirstOrDefault(d => d.WPId == wpId && d.Property == property);
 			if (existingChange == null)
@@ -1470,6 +1510,56 @@ namespace CreateWorkPackages3
 				////m.Show(tabDetailsPlan_GridView, new Point(e.X, e.Y));
 				//m.Location(new Point(e.X, e.Y));
 			}
+		}
+
+		private void tableLayoutPanel3_DragDrop(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void tableLayoutPanel3_DragOver(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void tableLayoutPanel3_DragEnter(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void tableLayoutPanel3_DragLeave(object sender, EventArgs e)
+		{
+
+		}
+
+		private void label26_DragDrop(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void label26_DragEnter(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void label26_DragLeave(object sender, EventArgs e)
+		{
+
+		}
+
+		private void label26_DragOver(object sender, DragEventArgs e)
+		{
+
+		}
+
+		private void label26_MouseHover(object sender, EventArgs e)
+		{
+
+		}
+
+		private void label26_MouseLeave(object sender, EventArgs e)
+		{
+
 		}
 	}
 }

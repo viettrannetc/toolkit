@@ -150,6 +150,7 @@ namespace CreateWorkPackages3
 			this.Daily_log_textbox = new System.Windows.Forms.RichTextBox();
 			this.tabPage3 = new System.Windows.Forms.TabPage();
 			this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
+			this.label26 = new System.Windows.Forms.Label();
 			this.tabMain.SuspendLayout();
 			this.tabDaily.SuspendLayout();
 			this.groupBox1.SuspendLayout();
@@ -1455,6 +1456,7 @@ namespace CreateWorkPackages3
 			// 
 			// tabPage3
 			// 
+			this.tabPage3.Controls.Add(this.label26);
 			this.tabPage3.Controls.Add(this.tableLayoutPanel3);
 			this.tabPage3.Location = new System.Drawing.Point(4, 22);
 			this.tabPage3.Name = "tabPage3";
@@ -1466,16 +1468,36 @@ namespace CreateWorkPackages3
 			// 
 			// tableLayoutPanel3
 			// 
+			this.tableLayoutPanel3.CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.Single;
 			this.tableLayoutPanel3.ColumnCount = 2;
 			this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
 			this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel3.Location = new System.Drawing.Point(350, 147);
+			this.tableLayoutPanel3.Location = new System.Drawing.Point(87, 147);
 			this.tableLayoutPanel3.Name = "tableLayoutPanel3";
 			this.tableLayoutPanel3.RowCount = 2;
 			this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
 			this.tableLayoutPanel3.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 50F));
-			this.tableLayoutPanel3.Size = new System.Drawing.Size(200, 100);
+			this.tableLayoutPanel3.Size = new System.Drawing.Size(463, 236);
 			this.tableLayoutPanel3.TabIndex = 0;
+			this.tableLayoutPanel3.DragDrop += new System.Windows.Forms.DragEventHandler(this.tableLayoutPanel3_DragDrop);
+			this.tableLayoutPanel3.DragEnter += new System.Windows.Forms.DragEventHandler(this.tableLayoutPanel3_DragEnter);
+			this.tableLayoutPanel3.DragOver += new System.Windows.Forms.DragEventHandler(this.tableLayoutPanel3_DragOver);
+			this.tableLayoutPanel3.DragLeave += new System.EventHandler(this.tableLayoutPanel3_DragLeave);
+			// 
+			// label26
+			// 
+			this.label26.AutoSize = true;
+			this.label26.Location = new System.Drawing.Point(95, 111);
+			this.label26.Name = "label26";
+			this.label26.Size = new System.Drawing.Size(41, 13);
+			this.label26.TabIndex = 0;
+			this.label26.Text = "label26";
+			this.label26.DragDrop += new System.Windows.Forms.DragEventHandler(this.label26_DragDrop);
+			this.label26.DragEnter += new System.Windows.Forms.DragEventHandler(this.label26_DragEnter);
+			this.label26.DragOver += new System.Windows.Forms.DragEventHandler(this.label26_DragOver);
+			this.label26.DragLeave += new System.EventHandler(this.label26_DragLeave);
+			this.label26.MouseLeave += new System.EventHandler(this.label26_MouseLeave);
+			this.label26.MouseHover += new System.EventHandler(this.label26_MouseHover);
 			// 
 			// Form1
 			// 
@@ -1517,6 +1539,7 @@ namespace CreateWorkPackages3
 			((System.ComponentModel.ISupportInitialize)(this.tabDetailsPlan_GridView)).EndInit();
 			this.tabLog.ResumeLayout(false);
 			this.tabPage3.ResumeLayout(false);
+			this.tabPage3.PerformLayout();
 			this.ResumeLayout(false);
 
         }
@@ -1642,6 +1665,7 @@ namespace CreateWorkPackages3
 		private DataGridView tabDetailsPlan_GridView_changes;
 		private TableLayoutPanel tableLayoutPanel3;
 		private Button tabDetailsPlan_btn_open_planning;
+		private Label label26;
 	}
 }
 
