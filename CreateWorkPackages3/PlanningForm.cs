@@ -279,7 +279,7 @@ namespace CreateWorkPackages3
 			_iterationsPlanning = _iterationsPlanning
 				.OrderBy(d => d.Year)
 				.ThenBy(d => d.Month)
-				.ThenBy(d => d.Iteration)
+				.ThenBy(d => d.IterationId)
 				.ToList();
 
 			planningRow.RowStyles.Clear();
@@ -315,7 +315,7 @@ namespace CreateWorkPackages3
 
 			#region 2nd row - Iteration
 			planningRow.RowCount = planningRow.RowCount + 1;
-			var iterations = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
+			var iterations = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
 			var iterationRow = new TableLayoutPanel()
 			{
 				Dock = DockStyle.Fill,
@@ -324,7 +324,7 @@ namespace CreateWorkPackages3
 			};
 			for (int i = 0; i < iterationRow.ColumnCount; i++)
 			{
-				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
+				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
 
 				iterationRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
 			}
@@ -332,7 +332,7 @@ namespace CreateWorkPackages3
 			iterationRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
 			for (int i = 1; i <= iterations.Count; i++)
 			{
-				var showingIteration = _iterationsPlanning.First(d => d.Iteration == i);
+				var showingIteration = _iterationsPlanning.First(d => d.IterationId == i);
 				var label = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = iterations[i - 1].ToString(), BackColor = showingIteration.Status.Color };
 				iterationRow.Controls.Add(label, i, 0);
 				var content = $"{showingIteration.Status.ToolTip}\r\n{Environment.NewLine}{Label_Iteration_DetailContent(showingIteration)}";
@@ -344,7 +344,7 @@ namespace CreateWorkPackages3
 
 			#region 3rd row - Available / Workload / Allocated
 			planningRow.RowCount = planningRow.RowCount + 1;
-			var numberOfColumnIn4thRow = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
+			var numberOfColumnIn4thRow = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
 			var availableRow = new TableLayoutPanel()
 			{
 				Dock = DockStyle.Fill,
@@ -353,14 +353,14 @@ namespace CreateWorkPackages3
 			};
 			for (int i = 0; i < availableRow.ColumnCount; i++)
 			{
-				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
+				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
 
 				availableRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
 			}
 			availableRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Available/Workload/Allocated" }, 0, 0);
 			for (int i = 1; i <= numberOfColumnIn4thRow.Count; i++)
 			{
-				var iteration = _iterationsPlanning.First(it => it.Iteration == numberOfColumnIn4thRow[i - 1]);
+				var iteration = _iterationsPlanning.First(it => it.IterationId == numberOfColumnIn4thRow[i - 1]);
 				availableRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{iteration.AvailableHours}/{iteration.Workload}/{iteration.AllocatedHours}" }, i, 0);
 			}
 			planningRow.Controls.Add(availableRow, 0, planningRow.RowCount - 1);
@@ -380,7 +380,7 @@ namespace CreateWorkPackages3
 			};
 			planningRow.Controls.Add(featuresRow, 0, planningRow.RowCount - 1);
 
-			var numberOfColumnInRow = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
+			var numberOfColumnInRow = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
 
 			for (int featureIndex = 0; featureIndex < _service._toolkitFeatures.Count; featureIndex++)
 			{
@@ -400,7 +400,7 @@ namespace CreateWorkPackages3
 				//auto generate style for all columns
 				for (int i = 0; i < featureRow.ColumnCount; i++)
 				{
-					var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
+					var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
 					featureRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
 				}
 
@@ -431,7 +431,7 @@ namespace CreateWorkPackages3
 					//}, i, 0);
 
 
-					var iteration = relavantIterations.FirstOrDefault(it => it.Iteration == numberOfColumnIn4thRow[i - 1]);
+					var iteration = relavantIterations.FirstOrDefault(it => it.IterationId == numberOfColumnIn4thRow[i - 1]);
 					if (iteration == null) continue;
 
 					var selectedFeature = iteration.Items.First(f => f.Feature == $"{feature.Id} - {feature.Title}");

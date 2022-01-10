@@ -283,6 +283,15 @@
     <Compile Include="Form1.Designer.cs">
       <DependentUpon>Form1.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\Form1\CreateItem.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Form1\Test.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\Form1\DetailsTab.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="IterationPopup.cs">
       <SubType>Form</SubType>
     </Compile>

@@ -879,9 +879,11 @@ namespace CreateWorkPackages3.Service
 				if (!string.IsNullOrEmpty(wp.StartDate))
 					startDate = Convert.ToDateTime(wp.StartDate).Date;
 
-				//toolkitItem[StatusField] = wp.Status;
+				toolkitItem[StatusField] = wp.Status;
 				toolkitItem[EstimateField] = wp.Estimate;
-				toolkitItem[RemainingWorkField] = wp.RemainingWork;
+				toolkitItem[RemainingWorkField] = wp.RemainingWork.Contains(',')
+					? wp.RemainingWork.Replace(',', '.')
+					: wp.RemainingWork;
 				//toolkitItem[WPTypeField] = wp.WPType;
 				toolkitItem[DueDateField] = dueDate;
 				//toolkitItem[ReleaseField] = new FieldLookupValue { LookupId = wp.Release };

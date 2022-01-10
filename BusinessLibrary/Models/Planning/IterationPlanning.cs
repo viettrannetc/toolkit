@@ -13,7 +13,7 @@ namespace BusinessLibrary.Models.Planning
 		public int Year { get; set; }
 		public int Month { get; set; }
 		public List<int> Weeks { get; set; }
-		public int Iteration { get; set; }
+		public int IterationId { get; set; }
 		public string IterationName { get; set; }
 		public abstract decimal AvailableHours { get; }
 		public abstract decimal Workload { get; }
@@ -54,7 +54,7 @@ namespace BusinessLibrary.Models.Planning
 
 			Year = toolkitIterationModel.StartDate.Date.Year;
 			Month = toolkitIterationModel.StartDate.Date.Month;
-			Iteration = int.Parse(toolkitIterationModel.Title.Split(' ')[toolkitIterationModel.Title.Split(' ').Count() - 1]);
+			IterationId = int.Parse(toolkitIterationModel.Title.Split(' ')[toolkitIterationModel.Title.Split(' ').Count() - 1]);
 			IterationName = toolkitIterationModel.Title;
 
 			var workingDaysInIteration = new List<DateTime>();
@@ -123,8 +123,11 @@ namespace BusinessLibrary.Models.Planning
 					if (existingAction == null)
 					{
 						existingFeature.Actions.Add(new Tuple<string, string>(workPackage.USShow, $"{workPackage.WPType} ({workPackage.WPRemainingHour})"));
-						result.Add(existingFeature);
+						existingFeature.TotalHours += decimal.Parse(workPackage.WPRemainingHour);
 					}
+
+					if (!result.Any(r => r.Feature == existingFeature.Feature))
+						result.Add(existingFeature);
 				}
 
 				return result;
@@ -144,6 +147,9 @@ namespace BusinessLibrary.Models.Planning
 		{
 			get
 			{
+				//StringBuilder a = new StringBuilder();
+				//a.AppendLine($"
+
 				return WorkPackages.Sum(p => decimal.Parse(p.WPRemainingHour));
 			}
 		}
@@ -160,23 +166,26 @@ namespace BusinessLibrary.Models.Planning
 		{
 			get
 			{
-				if (AvailableHours * 1.15M <= Workload)
-					return new IterationPlanningStatusModel(Color.Yellow, $"Workload ({Workload}) is higher than available hours ({AvailableHours})");
+				var availableHours = AvailableHours;
+				var workloadInIteration = Workload;
+				var allocatedHours = AllocatedHours;
+				if (availableHours * 1.15M <= workloadInIteration)
+					return new IterationPlanningStatusModel(Color.Yellow, $"Workload ({workloadInIteration}) is higher than available hours ({availableHours})");
 
-				if (AvailableHours * 1.3M <= Workload)
-					return new IterationPlanningStatusModel(Color.Red, $"Workload ({Workload}) is much higher than available hours ({AvailableHours})");
+				if (availableHours * 1.3M <= workloadInIteration)
+					return new IterationPlanningStatusModel(Color.Red, $"Workload ({workloadInIteration}) is much higher than available hours ({availableHours})");
 
-				if (AvailableHours * 0.8M >= Workload)
-					return new IterationPlanningStatusModel(Color.LightGreen, $"The Iteration will properly need more work packages - there are {AvailableHours - Workload} hours haven't been used");
+				if (availableHours * 0.8M >= workloadInIteration)
+					return new IterationPlanningStatusModel(Color.LightGreen, $"The Iteration will properly need more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
 
-				if (AvailableHours * 0.5M >= Workload)
-					return new IterationPlanningStatusModel(Color.Green, $"The Iteration needs more work packages - there are {AvailableHours - Workload} hours haven't been used");
+				if (availableHours * 0.5M >= workloadInIteration)
+					return new IterationPlanningStatusModel(Color.Green, $"The Iteration needs more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
 
-				if (AllocatedHours <= Workload * 0.8M)
-					return new IterationPlanningStatusModel(Color.Yellow, $"There are {Workload - AllocatedHours} hours haven't been assigned");
+				if (allocatedHours <= workloadInIteration * 0.8M)
+					return new IterationPlanningStatusModel(Color.Yellow, $"There are {workloadInIteration - allocatedHours} hours haven't been assigned");
 
-				if (AllocatedHours <= Workload * 0.5M)
-					return new IterationPlanningStatusModel(Color.Red, $"Please allocate the WP for the team member - there are {Workload - AllocatedHours} hours haven't been assigned");
+				if (allocatedHours <= workloadInIteration * 0.5M)
+					return new IterationPlanningStatusModel(Color.Red, $"Please allocate the WP for the team member - there are {workloadInIteration - allocatedHours} hours haven't been assigned");
 
 				return new IterationPlanningStatusModel(Color.White, $"");
 			}
@@ -209,7 +218,7 @@ namespace BusinessLibrary.Models.Planning
 		}
 		public string Feature { get; set; }
 		public List<Tuple<string, string>> Actions { get; set; }
-		//public decimal TotalHours { get; set; }
+		public decimal TotalHours { get; set; }
 	}
 
 	public class IterationItemDetailsPlanningModel
