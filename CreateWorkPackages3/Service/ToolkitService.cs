@@ -716,45 +716,61 @@ namespace CreateWorkPackages3.Service
 			}
 		}
 
-		public void GetWorkpackages(string releaseId, string iterationId)
+		public void GetWorkpackages(string releaseId)
 		{
 			var usIds = _us.Select(f => f.Id).ToList();
-			var xmlUSText = new StringBuilder();
-			xmlUSText.Append(@"<In><FieldRef LookupId='TRUE' Name='FunctionalScenario' /><Values>");
+			var featureIds = _features.Select(f => f.Id).ToList();
 
-			foreach (var item in usIds)
+			var xmlUSText = new StringBuilder();
+			xmlUSText.Append(@"<In><FieldRef LookupId='TRUE' Name='RelatedCase' /><Values>");
+			foreach (var item in featureIds)
 			{
 				xmlUSText.AppendLine($"<Value Type='Lookup'>{item}</Value>");
 			}
-
 			xmlUSText.Append(@"</Values></In>");
 
-			var xmlIterationText = new StringBuilder();
-			if (!string.IsNullOrEmpty(iterationId) && iterationId != "0")
+			var xmlReleaseText = new StringBuilder();
+			//if (!string.IsNullOrEmpty(releaseId) && releaseId != "0")
+			//{
+			//	xmlReleaseText.AppendLine($@"<AND>
+			//						<Eq>
+			//							<FieldRef LookupId='TRUE' Name='Release' />
+			//							<Value Type='Lookup'>{releaseId}</Value>
+			//						</Eq>
+			//						</AND>");
+			//	//xmlReleaseText.AppendLine($@"<Eq>
+			//	//						<FieldRef LookupId='TRUE' Name='Release' />
+			//	//						<Value Type='Lookup'>{releaseId}</Value>
+			//	//					</Eq>");
+			//}
+
+			//xmlUSText.Append(@"</Values></In>");
+
+
+			var xmlWhereCondition = new StringBuilder();
+			xmlWhereCondition.AppendLine("<Where>");
+			if (xmlReleaseText != null)
 			{
-				xmlIterationText.AppendLine($@"<AND>
-										<Eq>
-											<FieldRef LookupId='TRUE' Name='Iteration' />
-											<Value Type='Lookup'>{iterationId}</Value>
-										</Eq>
-									 </AND>");
+				if (xmlReleaseText != null)
+				{
+					xmlWhereCondition.AppendLine("<AND>");
+					xmlWhereCondition.AppendLine(xmlUSText.ToString());
+					xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
+					xmlWhereCondition.AppendLine("</AND>");
+				}
+				else
+				{
+					xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
+				}
 			}
+			xmlWhereCondition.AppendLine("</Where>");
 
 			var query = new CamlQuery()
 			{
 				ViewXml = $@"<View>
-							   <Query>
-								  <Where>
-									{xmlUSText}
-									<AND>
-									<Eq>
-										<FieldRef LookupId='TRUE' Name='Release' />
-										<Value Type='Lookup'>{releaseId}</Value>
-									</Eq>
-									</AND>
-								    {xmlIterationText}
-								  </Where>
-							   </Query>
+							   <Query><Where>
+								  {xmlUSText}
+							   </Where></Query>
 							   <ViewFields>
 									<FieldRef Name='Id' />
 									<FieldRef Name='Title' />      
@@ -771,14 +787,19 @@ namespace CreateWorkPackages3.Service
 									<FieldRef Name='Release' />
 									<FieldRef Name='RelatedCase' />
 									<FieldRef Name='Iteration' />
-<FieldRef Name='Depend_x0020_on' />
-
+									<FieldRef Name='Depend_x0020_on' />
 							   </ViewFields>
 							   <QueryOptions />
 							</View>"
 			};
 
 			var title = "Work packages";
+
+			//_wps = _context.Web.Lists.GetByTitle(title).GetItems(_query);
+			//_context.Load(_wps, uitems => uitems);
+			//_context.ExecuteQuery();
+
+
 			_wps = _context.Web.Lists.GetByTitle(title).GetItems(query);
 			_context.Load(_wps, uitems => uitems.Include(
 				item => item.Id,

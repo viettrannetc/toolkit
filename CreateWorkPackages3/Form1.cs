@@ -70,7 +70,20 @@ namespace CreateWorkPackages3
 			GetMetadataFromSharepoint();
 			PullLatestData(_defaultReleaseId.ToString(), string.Empty, _defaultTeamId.ToString());
 
-			//ControlExtension.Draggable(label26, true);
+
+			string fname = $@"{System.IO.Directory.GetCurrentDirectory()}\..\..\..\BusinessLibrary\Resource\Icon\running.png";
+			var bmp = Bitmap.FromFile(fname);
+			var thumb = (Bitmap)bmp.GetThumbnailImage(8, 8, null, IntPtr.Zero);
+			thumb.MakeTransparent();
+			var icon = Icon.FromHandle(thumb.GetHicon());
+			label26.Image = icon.ToBitmap();
+			//label26.Width = 100;
+			//label26.AutoSize = false;
+			label26.Text = "If you set the label to AutoSize, it will automatically grow with whatever text you put in it. (This includes vertical growth.)";
+			label26.TextAlign = ContentAlignment.MiddleLeft;
+			label26.ImageAlign = ContentAlignment.MiddleRight;
+			label26.MaximumSize = new Size(100, 0);
+			label26.AutoSize = true;
 		}
 		~Form1()
 		{
@@ -246,7 +259,7 @@ namespace CreateWorkPackages3
 					_service.GetAllocationAdjustments(_defaultTeamId.ToString());
 
 					_service.GetUserStories();
-					_service.GetWorkpackages(selectedReleaseId, selectedIterationId);
+					_service.GetWorkpackages(selectedReleaseId);
 
 					BuildDailyTrack();
 					LoadDailyTrack();

@@ -73,6 +73,8 @@
     <Compile Include="Models\ErrorViewModel.cs" />
     <Compile Include="Models\Feature.cs" />
     <Compile Include="Models\FeatureOverview.cs" />
+    <Compile Include="Models\Icon\IconType.cs" />
+    <Compile Include="Models\Planning\Extension\IterationPlanningExtension.cs" />
     <Compile Include="Models\Planning\IterationPlanning.cs" />
     <Compile Include="Models\Planning\PIPlanningModel.cs" />
     <Compile Include="Models\Planning\PlanningModels.cs" />
@@ -95,6 +97,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resource\Icon\running.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

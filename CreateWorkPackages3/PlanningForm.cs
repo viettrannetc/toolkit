@@ -1,4 +1,6 @@
 ﻿using BusinessLibrary.Models.Planning;
+using BusinessLibrary.Models.Planning.Extension;
+using CreateWorkPackages3.Extension;
 using CreateWorkPackages3.Service;
 using System;
 using System.Collections.Generic;
@@ -405,32 +407,12 @@ namespace CreateWorkPackages3
 				}
 
 				//Add feature name to the 1st column
-				featureRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{feature.Title} - ({feature.Id})" }, 0, 0);
+				featureRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"({feature.Id}) - {feature.Title}" }, 0, 0);
 
 
 				//generate data for each cell - based on column & 1st row (start with row # = 0)
-
 				for (int i = 1; i <= numberOfColumnInRow.Count; i++)
 				{
-					//var iteration = relavantIterations.FirstOrDefault(it => it.Iteration == numberOfColumnIn4thRow[i - 1]);
-					//if (iteration == null) continue;
-
-					//var selectedFeature = iteration.Items.First(f => f.Feature == $"{feature.Id} - {feature.Title}");
-					//var actions = selectedFeature.Actions;
-					//var content = new StringBuilder();
-					//foreach (var action in actions)
-					//{
-					//	content.AppendLine($"{action.Item2}{Environment.NewLine}");
-					//}
-
-					//featureRow.Controls.Add(new Label()
-					//{
-					//	TextAlign = ContentAlignment.TopLeft,
-					//	Dock = DockStyle.Fill,
-					//	Text = $"{content}",
-					//}, i, 0);
-
-
 					var iteration = relavantIterations.FirstOrDefault(it => it.IterationId == numberOfColumnIn4thRow[i - 1]);
 					if (iteration == null) continue;
 
@@ -451,28 +433,31 @@ namespace CreateWorkPackages3
 						var actionRow = new TableLayoutPanel()
 						{
 							Dock = DockStyle.Fill,
-							ColumnCount = 1,
+							ColumnCount = 1
 						};
 
 						var actionLabel = new Label()
 						{
-							Name = $"{action.Item1}_{Guid.NewGuid()}_{actionIndex}",
-							TextAlign = ContentAlignment.TopLeft,
+							Name = $"{action.Feature}_{Guid.NewGuid()}_{actionIndex}",
 							Dock = DockStyle.Fill,
-							Text = action.Item2,
+							Text = action.WPText,
+							TextAlign = ContentAlignment.TopLeft,
+							Image = action.Icon.SetImage(12),
+							ImageAlign = ContentAlignment.TopRight,
+							//AutoSize = false
+							MaximumSize = new Size((int)(witdhMinumumColumn * iteration.Weeks.Count()) - 20, 0),
+							AutoSize = false
 						};
 						actionLabel.MouseLeave += new System.EventHandler(ActionLabel_MouseLeave);
 						actionLabel.MouseHover += new System.EventHandler(ActionLabel_MouseOver);
 						ToolTip toolTip = new ToolTip();
-						toolTip.SetToolTip(actionLabel, action.Item1);
-						ControlExtension.Draggable(actionLabel, true);
+						toolTip.SetToolTip(actionLabel, action.Feature);
+						//ControlExtension.Draggable(actionLabel, true);
 
-						if (!actionLabels.ContainsKey(action.Item1))
-							actionLabels.Add(action.Item1, new List<Label>() { actionLabel });
+						if (!actionLabels.ContainsKey(action.Feature))
+							actionLabels.Add(action.Feature, new List<Label>() { actionLabel });
 						else
-						{
-							actionLabels[action.Item1].Add(actionLabel);
-						}
+							actionLabels[action.Feature].Add(actionLabel);
 
 						actionRow.Controls.Add(actionLabel, 0, 0);
 						actionRow.RowStyles.Insert(0, new RowStyle(SizeType.Absolute) { Height = heightMinumumRow });
@@ -484,10 +469,6 @@ namespace CreateWorkPackages3
 						lastActionRow++;
 					}
 					featureRow.Controls.Add(iterationAndFeatureCell, i, 0);
-
-					//iterationAndFeatureCell.RowStyles.Add(new RowStyle(SizeType.Absolute, heightMinumumRow));
-
-					//featureRow.RowStyles.Add(new RowStyle(SizeType.Absolute) { Height = selectedFeature.Actions.Count * heightMinumumRow });
 				}
 
 				var findMaxHeight = 1;

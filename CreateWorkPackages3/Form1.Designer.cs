@@ -141,6 +141,8 @@ namespace CreateWorkPackages3
 			this.tableLayoutPanel2 = new System.Windows.Forms.TableLayoutPanel();
 			this.tabDetailsPlan_GridView_changes = new System.Windows.Forms.DataGridView();
 			this.groupBox5 = new System.Windows.Forms.GroupBox();
+			this.detailPlan_label_status = new System.Windows.Forms.Label();
+			this.label27 = new System.Windows.Forms.Label();
 			this.tabDetailsPlan_btn_open_planning = new System.Windows.Forms.Button();
 			this.tabDetailsPlan_btn_apply_changes = new System.Windows.Forms.Button();
 			this.tabDetails_btn_refersh = new System.Windows.Forms.Button();
@@ -151,8 +153,6 @@ namespace CreateWorkPackages3
 			this.tabPage3 = new System.Windows.Forms.TabPage();
 			this.label26 = new System.Windows.Forms.Label();
 			this.tableLayoutPanel3 = new System.Windows.Forms.TableLayoutPanel();
-			this.label27 = new System.Windows.Forms.Label();
-			this.detailPlan_label_status = new System.Windows.Forms.Label();
 			this.tabMain.SuspendLayout();
 			this.tabDaily.SuspendLayout();
 			this.groupBox1.SuspendLayout();
@@ -237,7 +237,7 @@ namespace CreateWorkPackages3
 			this.tabDaily.Location = new System.Drawing.Point(4, 22);
 			this.tabDaily.Name = "tabDaily";
 			this.tabDaily.Padding = new System.Windows.Forms.Padding(3);
-			this.tabDaily.Size = new System.Drawing.Size(1271, 791);
+			this.tabDaily.Size = new System.Drawing.Size(1576, 887);
 			this.tabDaily.TabIndex = 0;
 			this.tabDaily.Text = "Daily";
 			this.tabDaily.UseVisualStyleBackColor = true;
@@ -248,7 +248,7 @@ namespace CreateWorkPackages3
 			this.groupBox1.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.groupBox1.Location = new System.Drawing.Point(3, 3);
 			this.groupBox1.Name = "groupBox1";
-			this.groupBox1.Size = new System.Drawing.Size(1265, 685);
+			this.groupBox1.Size = new System.Drawing.Size(1570, 781);
 			this.groupBox1.TabIndex = 10;
 			this.groupBox1.TabStop = false;
 			this.groupBox1.Text = "Daily data";
@@ -259,7 +259,7 @@ namespace CreateWorkPackages3
 			this.Daily_DataGridView.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.Daily_DataGridView.Location = new System.Drawing.Point(3, 16);
 			this.Daily_DataGridView.Name = "Daily_DataGridView";
-			this.Daily_DataGridView.Size = new System.Drawing.Size(1259, 666);
+			this.Daily_DataGridView.Size = new System.Drawing.Size(1564, 762);
 			this.Daily_DataGridView.TabIndex = 8;
 			// 
 			// groupBox6
@@ -274,9 +274,9 @@ namespace CreateWorkPackages3
 			this.groupBox6.Controls.Add(this.Daily_Filter_cbb_Feature);
 			this.groupBox6.Controls.Add(this.Daily_Filter_cbb_US);
 			this.groupBox6.Dock = System.Windows.Forms.DockStyle.Bottom;
-			this.groupBox6.Location = new System.Drawing.Point(3, 688);
+			this.groupBox6.Location = new System.Drawing.Point(3, 784);
 			this.groupBox6.Name = "groupBox6";
-			this.groupBox6.Size = new System.Drawing.Size(1265, 100);
+			this.groupBox6.Size = new System.Drawing.Size(1570, 100);
 			this.groupBox6.TabIndex = 9;
 			this.groupBox6.TabStop = false;
 			this.groupBox6.Text = "Filter data";
@@ -370,7 +370,7 @@ namespace CreateWorkPackages3
 			this.tabCreateItem.Location = new System.Drawing.Point(4, 22);
 			this.tabCreateItem.Name = "tabCreateItem";
 			this.tabCreateItem.Padding = new System.Windows.Forms.Padding(3);
-			this.tabCreateItem.Size = new System.Drawing.Size(1271, 791);
+			this.tabCreateItem.Size = new System.Drawing.Size(1576, 887);
 			this.tabCreateItem.TabIndex = 1;
 			this.tabCreateItem.Text = "Create Items";
 			this.tabCreateItem.UseVisualStyleBackColor = true;
@@ -383,7 +383,7 @@ namespace CreateWorkPackages3
 			this.tabControlCreateNewItem.Location = new System.Drawing.Point(3, 3);
 			this.tabControlCreateNewItem.Name = "tabControlCreateNewItem";
 			this.tabControlCreateNewItem.SelectedIndex = 0;
-			this.tabControlCreateNewItem.Size = new System.Drawing.Size(1265, 785);
+			this.tabControlCreateNewItem.Size = new System.Drawing.Size(1570, 881);
 			this.tabControlCreateNewItem.TabIndex = 7;
 			// 
 			// tcCreateNewItem_tabUS
@@ -428,7 +428,7 @@ namespace CreateWorkPackages3
 			this.tcCreateNewItem_tabUS.Location = new System.Drawing.Point(4, 22);
 			this.tcCreateNewItem_tabUS.Name = "tcCreateNewItem_tabUS";
 			this.tcCreateNewItem_tabUS.Padding = new System.Windows.Forms.Padding(3);
-			this.tcCreateNewItem_tabUS.Size = new System.Drawing.Size(1257, 759);
+			this.tcCreateNewItem_tabUS.Size = new System.Drawing.Size(1562, 855);
 			this.tcCreateNewItem_tabUS.TabIndex = 0;
 			this.tcCreateNewItem_tabUS.Text = "US";
 			this.tcCreateNewItem_tabUS.UseVisualStyleBackColor = true;
@@ -452,7 +452,7 @@ namespace CreateWorkPackages3
 			// US_btn_calculateEstimate
 			// 
 			this.US_btn_calculateEstimate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.US_btn_calculateEstimate.Location = new System.Drawing.Point(489, 552);
+			this.US_btn_calculateEstimate.Location = new System.Drawing.Point(794, 648);
 			this.US_btn_calculateEstimate.Name = "US_btn_calculateEstimate";
 			this.US_btn_calculateEstimate.Size = new System.Drawing.Size(101, 38);
 			this.US_btn_calculateEstimate.TabIndex = 59;
@@ -685,7 +685,7 @@ namespace CreateWorkPackages3
 			// btn_US_AddItem
 			// 
 			this.btn_US_AddItem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-			this.btn_US_AddItem.Location = new System.Drawing.Point(96, 646);
+			this.btn_US_AddItem.Location = new System.Drawing.Point(401, 742);
 			this.btn_US_AddItem.Name = "btn_US_AddItem";
 			this.btn_US_AddItem.Size = new System.Drawing.Size(661, 71);
 			this.btn_US_AddItem.TabIndex = 43;
@@ -757,7 +757,7 @@ namespace CreateWorkPackages3
 			this.tcCreateNewItem_tabWP.Location = new System.Drawing.Point(4, 22);
 			this.tcCreateNewItem_tabWP.Name = "tcCreateNewItem_tabWP";
 			this.tcCreateNewItem_tabWP.Padding = new System.Windows.Forms.Padding(3);
-			this.tcCreateNewItem_tabWP.Size = new System.Drawing.Size(1257, 759);
+			this.tcCreateNewItem_tabWP.Size = new System.Drawing.Size(1562, 855);
 			this.tcCreateNewItem_tabWP.TabIndex = 1;
 			this.tcCreateNewItem_tabWP.Text = "WP";
 			this.tcCreateNewItem_tabWP.UseVisualStyleBackColor = true;
@@ -1256,7 +1256,7 @@ namespace CreateWorkPackages3
 			this.tabOthers.Location = new System.Drawing.Point(4, 22);
 			this.tabOthers.Name = "tabOthers";
 			this.tabOthers.Padding = new System.Windows.Forms.Padding(3);
-			this.tabOthers.Size = new System.Drawing.Size(1271, 791);
+			this.tabOthers.Size = new System.Drawing.Size(1576, 887);
 			this.tabOthers.TabIndex = 2;
 			this.tabOthers.Text = "Others";
 			this.tabOthers.UseVisualStyleBackColor = true;
@@ -1267,7 +1267,7 @@ namespace CreateWorkPackages3
 			this.tabGanttchart.Location = new System.Drawing.Point(4, 22);
 			this.tabGanttchart.Name = "tabGanttchart";
 			this.tabGanttchart.Padding = new System.Windows.Forms.Padding(3);
-			this.tabGanttchart.Size = new System.Drawing.Size(1271, 791);
+			this.tabGanttchart.Size = new System.Drawing.Size(1576, 887);
 			this.tabGanttchart.TabIndex = 3;
 			this.tabGanttchart.Text = "Gantt Chart";
 			this.tabGanttchart.UseVisualStyleBackColor = true;
@@ -1384,6 +1384,24 @@ namespace CreateWorkPackages3
 			this.groupBox5.TabStop = false;
 			this.groupBox5.Text = "Controls";
 			// 
+			// detailPlan_label_status
+			// 
+			this.detailPlan_label_status.AutoSize = true;
+			this.detailPlan_label_status.Location = new System.Drawing.Point(52, 119);
+			this.detailPlan_label_status.Name = "detailPlan_label_status";
+			this.detailPlan_label_status.Size = new System.Drawing.Size(28, 13);
+			this.detailPlan_label_status.TabIndex = 26;
+			this.detailPlan_label_status.Text = ".......";
+			// 
+			// label27
+			// 
+			this.label27.AutoSize = true;
+			this.label27.Location = new System.Drawing.Point(6, 119);
+			this.label27.Name = "label27";
+			this.label27.Size = new System.Drawing.Size(40, 13);
+			this.label27.TabIndex = 25;
+			this.label27.Text = "Status:";
+			// 
 			// tabDetailsPlan_btn_open_planning
 			// 
 			this.tabDetailsPlan_btn_open_planning.Location = new System.Drawing.Point(6, 62);
@@ -1464,19 +1482,17 @@ namespace CreateWorkPackages3
 			this.tabPage3.Location = new System.Drawing.Point(4, 22);
 			this.tabPage3.Name = "tabPage3";
 			this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-			this.tabPage3.Size = new System.Drawing.Size(1271, 791);
+			this.tabPage3.Size = new System.Drawing.Size(1576, 887);
 			this.tabPage3.TabIndex = 6;
 			this.tabPage3.Text = "Planning";
 			this.tabPage3.UseVisualStyleBackColor = true;
 			// 
 			// label26
 			// 
-			this.label26.AutoSize = true;
-			this.label26.Location = new System.Drawing.Point(95, 111);
+			this.label26.Location = new System.Drawing.Point(84, 111);
 			this.label26.Name = "label26";
-			this.label26.Size = new System.Drawing.Size(41, 13);
+			this.label26.Size = new System.Drawing.Size(13, 14);
 			this.label26.TabIndex = 0;
-			this.label26.Text = "label26";
 			this.label26.DragDrop += new System.Windows.Forms.DragEventHandler(this.label26_DragDrop);
 			this.label26.DragEnter += new System.Windows.Forms.DragEventHandler(this.label26_DragEnter);
 			this.label26.DragOver += new System.Windows.Forms.DragEventHandler(this.label26_DragOver);
@@ -1501,24 +1517,6 @@ namespace CreateWorkPackages3
 			this.tableLayoutPanel3.DragEnter += new System.Windows.Forms.DragEventHandler(this.tableLayoutPanel3_DragEnter);
 			this.tableLayoutPanel3.DragOver += new System.Windows.Forms.DragEventHandler(this.tableLayoutPanel3_DragOver);
 			this.tableLayoutPanel3.DragLeave += new System.EventHandler(this.tableLayoutPanel3_DragLeave);
-			// 
-			// label27
-			// 
-			this.label27.AutoSize = true;
-			this.label27.Location = new System.Drawing.Point(6, 119);
-			this.label27.Name = "label27";
-			this.label27.Size = new System.Drawing.Size(40, 13);
-			this.label27.TabIndex = 25;
-			this.label27.Text = "Status:";
-			// 
-			// detailPlan_label_status
-			// 
-			this.detailPlan_label_status.AutoSize = true;
-			this.detailPlan_label_status.Location = new System.Drawing.Point(52, 119);
-			this.detailPlan_label_status.Name = "detailPlan_label_status";
-			this.detailPlan_label_status.Size = new System.Drawing.Size(28, 13);
-			this.detailPlan_label_status.TabIndex = 26;
-			this.detailPlan_label_status.Text = ".......";
 			// 
 			// Form1
 			// 
@@ -1561,7 +1559,6 @@ namespace CreateWorkPackages3
 			((System.ComponentModel.ISupportInitialize)(this.tabDetailsPlan_GridView)).EndInit();
 			this.tabLog.ResumeLayout(false);
 			this.tabPage3.ResumeLayout(false);
-			this.tabPage3.PerformLayout();
 			this.ResumeLayout(false);
 
         }

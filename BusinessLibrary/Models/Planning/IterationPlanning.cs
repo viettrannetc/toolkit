@@ -1,4 +1,5 @@
-﻿using BusinessLibrary.Ultilities;
+﻿using BusinessLibrary.Models.Planning.Icon;
+using BusinessLibrary.Ultilities;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -105,24 +106,29 @@ namespace BusinessLibrary.Models.Planning
 			}
 		}
 
-		public List<IterationItemPlanningModel> Items
+		public List<IterationFeaturePlanningModel> Items
 		{
 			get
 			{
-				var result = new List<IterationItemPlanningModel>();
+				var result = new List<IterationFeaturePlanningModel>();
 
 				foreach (var workPackage in WorkPackages)
 				{
 					var existingFeature = result.FirstOrDefault(r => r.Feature == workPackage.FeatureShow);
 					if (existingFeature == null)
 					{
-						existingFeature = new IterationItemPlanningModel { Feature = workPackage.FeatureShow };
+						existingFeature = new IterationFeaturePlanningModel { Feature = workPackage.FeatureShow };
 					}
 
-					var existingAction = existingFeature.Actions.FirstOrDefault(r => r.Item1 == workPackage.USShow && r.Item2 == $"{workPackage.WPType} ({workPackage.WPRemainingHour})");
+					var existingAction = existingFeature.Actions.FirstOrDefault(r => r.Feature == workPackage.USShow && r.WPText == $"{workPackage.WPType} ({workPackage.WPRemainingHour}/{workPackage.WPEstimate})");
 					if (existingAction == null)
 					{
-						existingFeature.Actions.Add(new Tuple<string, string>(workPackage.USShow, $"{workPackage.WPType} ({workPackage.WPRemainingHour})"));
+						existingFeature.Actions.Add(new IterationFeatureItemPlanningModel
+						{
+							Feature = workPackage.USShow,
+							WPText = $"{workPackage.WPType} ({workPackage.WPRemainingHour}/{workPackage.WPEstimate})",
+							Status = workPackage.WPStatus
+						});
 						existingFeature.TotalHours += decimal.Parse(workPackage.WPRemainingHour);
 					}
 
@@ -210,14 +216,16 @@ namespace BusinessLibrary.Models.Planning
 
 	}
 
-	public class IterationItemPlanningModel
+	public class IterationFeaturePlanningModel
 	{
-		public IterationItemPlanningModel()
+		public IterationFeaturePlanningModel()
 		{
-			Actions = new List<Tuple<string, string>>();// new Dictionary<string, List<string>>();// new List<string>();
+			Actions = new List<IterationFeatureItemPlanningModel>();
 		}
 		public string Feature { get; set; }
-		public List<Tuple<string, string>> Actions { get; set; }
+
+		public List<IterationFeatureItemPlanningModel> Actions { get; set; }
+
 		public decimal TotalHours { get; set; }
 	}
 
@@ -226,6 +234,32 @@ namespace BusinessLibrary.Models.Planning
 		public string Feature { get; set; }
 		public string WPType { get; set; }
 		public decimal Hours { get; set; }
+	}
+
+	public class IterationFeatureItemPlanningModel
+	{
+		public string Feature { get; set; }
+		public string WPText { get; set; }
+		public string Status { get; set; }
+		public IconType Icon
+		{
+			get
+			{
+				switch (this.Status)
+				{
+					case "10 - New":
+						return IconType.New;
+					case "31 - Running":
+						return IconType.Running;
+					case "32 - Ready for review":
+						return IconType.InReview;					
+					case "70 - Blocked":
+						return IconType.Blocked;
+					default:
+						return IconType.None;
+				}
+			}
+		}
 	}
 
 	public class IterationPlanningStatusModel
