@@ -540,14 +540,7 @@ namespace CreateWorkPackages3
 
 		private void tabDetailsPlan_btn_open_planning_Click(object sender, EventArgs e)
 		{
-			var openForm = Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Name == "PlanningForm");
-			if (openForm != null)
-			{
-				openForm.Close();
-			}
-
-			var frm = new PlanningForm(_wpItemsLocal, _service);
-			frm.Show();
+			OpenPlanningForm();
 		}
 
 		public delegate void SelectIteration(List<string> selectedIterations);

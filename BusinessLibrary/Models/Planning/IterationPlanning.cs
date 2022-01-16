@@ -84,6 +84,7 @@ namespace BusinessLibrary.Models.Planning
 					if (allocationMemberByTeam.DateFrom.Value.Date <= workingDay.Date && workingDay.Date <= allocationMemberByTeam.DateTo.Value.Date)
 					{
 						member.AvailableHours += allocationMemberByTeam.HoursCapacity;
+						member.WorkingDays.Add(new WorkingDayModel { Date = workingDay, WorkingHours = allocationMemberByTeam.HoursCapacity });
 					}
 				}
 
@@ -101,6 +102,13 @@ namespace BusinessLibrary.Models.Planning
 					if (allocationAdjustmentMemberByTeam.DateFrom.Value.Date <= workingDay.Date && workingDay.Date <= allocationAdjustmentMemberByTeam.DateTo.Value.Date)
 					{
 						member.AvailableHours = member.AvailableHours - allocationAdjustmentMemberByTeam.HoursCapacity;
+
+						var day = member.WorkingDays.FirstOrDefault(wkd => wkd.Date.Date == workingDay.Date);
+						if (day != null)
+						{
+							day.NonWorkingHours = allocationAdjustmentMemberByTeam.HoursCapacity;
+							day.WorkingHours = day.WorkingHours - allocationAdjustmentMemberByTeam.HoursCapacity;
+						}
 					}
 				}
 			}
@@ -252,7 +260,7 @@ namespace BusinessLibrary.Models.Planning
 					case "31 - Running":
 						return IconType.Running;
 					case "32 - Ready for review":
-						return IconType.InReview;					
+						return IconType.InReview;
 					case "70 - Blocked":
 						return IconType.Blocked;
 					default:
@@ -278,6 +286,7 @@ namespace BusinessLibrary.Models.Planning
 		public IterationPeoplePlanningModel()
 		{
 			WorkPackages = new List<WPItemModel>();
+			WorkingDays = new List<WorkingDayModel>();
 		}
 		public string Name { get; set; }
 		public List<IterationItemDetailsPlanningModel> Actions
@@ -313,6 +322,15 @@ namespace BusinessLibrary.Models.Planning
 			}
 		}
 		public List<WPItemModel> WorkPackages { get; set; }
+
+		public List<WorkingDayModel> WorkingDays { get; set; }
+		//public List<WorkingDayModel> NonWorkingDays { get; set; }
 	}
 
+	public class WorkingDayModel
+	{
+		public DateTime Date { get; set; }
+		public decimal WorkingHours { get; set; }
+		public decimal NonWorkingHours { get; set; }
+	}
 }

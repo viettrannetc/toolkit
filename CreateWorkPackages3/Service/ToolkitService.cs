@@ -408,7 +408,7 @@ namespace CreateWorkPackages3.Service
 
 				DateTime startDate = DateTime.Parse(item.FieldValues["StartDate"].ToString()).Date;
 				DateTime dueDate = DateTime.Parse(item.FieldValues["EndDate"].ToString()).Date;
-
+				if (teamLookupId != 32) continue;
 				_toolkitIterations.Add(new ToolkitIterationModel
 				{
 					Id = item.Id,
@@ -722,14 +722,22 @@ namespace CreateWorkPackages3.Service
 			var featureIds = _features.Select(f => f.Id).ToList();
 
 			var xmlUSText = new StringBuilder();
-			xmlUSText.Append(@"<In><FieldRef LookupId='TRUE' Name='RelatedCase' /><Values>");
-			foreach (var item in featureIds)
+			//xmlUSText.Append(@"<In><FieldRef LookupId='TRUE' Name='RelatedCase' /><Values>");
+			//foreach (var item in featureIds)
+			//{
+			//	xmlUSText.AppendLine($"<Value Type='Lookup'>{item}</Value>");
+			//}
+
+			//xmlUSText.Append(@"<In><FieldRef LookupId='TRUE' Name='FunctionalScenario' /><Values>");
+			xmlUSText.Append(@"<In><FieldRef Name='FunctionalScenario' /><Values>");
+			foreach (var item in usIds)
 			{
 				xmlUSText.AppendLine($"<Value Type='Lookup'>{item}</Value>");
 			}
+
 			xmlUSText.Append(@"</Values></In>");
 
-			var xmlReleaseText = new StringBuilder();
+			//var xmlReleaseText = new StringBuilder();
 			//if (!string.IsNullOrEmpty(releaseId) && releaseId != "0")
 			//{
 			//	xmlReleaseText.AppendLine($@"<AND>
@@ -747,23 +755,23 @@ namespace CreateWorkPackages3.Service
 			//xmlUSText.Append(@"</Values></In>");
 
 
-			var xmlWhereCondition = new StringBuilder();
-			xmlWhereCondition.AppendLine("<Where>");
-			if (xmlReleaseText != null)
-			{
-				if (xmlReleaseText != null)
-				{
-					xmlWhereCondition.AppendLine("<AND>");
-					xmlWhereCondition.AppendLine(xmlUSText.ToString());
-					xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
-					xmlWhereCondition.AppendLine("</AND>");
-				}
-				else
-				{
-					xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
-				}
-			}
-			xmlWhereCondition.AppendLine("</Where>");
+			//var xmlWhereCondition = new StringBuilder();
+			//xmlWhereCondition.AppendLine("<Where>");
+			//if (xmlReleaseText != null)
+			//{
+			//	if (xmlReleaseText != null)
+			//	{
+			//		xmlWhereCondition.AppendLine("<AND>");
+			//		xmlWhereCondition.AppendLine(xmlUSText.ToString());
+			//		xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
+			//		xmlWhereCondition.AppendLine("</AND>");
+			//	}
+			//	else
+			//	{
+			//		xmlWhereCondition.AppendLine(xmlReleaseText.ToString());
+			//	}
+			//}
+			//xmlWhereCondition.AppendLine("</Where>");
 
 			var query = new CamlQuery()
 			{

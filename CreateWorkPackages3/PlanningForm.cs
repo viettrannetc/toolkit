@@ -2,18 +2,34 @@
 using BusinessLibrary.Models.Planning.Extension;
 using CreateWorkPackages3.Extension;
 using CreateWorkPackages3.Service;
+using CreateWorkPackages3.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CreateWorkPackages3
 {
 	public partial class PlanningForm : Form
 	{
+		private const string _column_Feature = "Feature";
+		private const string _column_WpType = "WPType";
+		private const string _column_Status = "Status";
+		private const string _column_Start = "Start";
+		private const string _column_Assignee = "Assignee";
+		private const string _column_Estimate = "Estimate";
+		private const string _column_Remaining = "Remaining";
+		private const string _column_DependOn = "DependOn";
+		private const string _column_Spent = "Spent";
+		private const string _column_DueDate = "DueDate";
+		private const string _column_Iteration = "Iteration";
+		private const int _defaultReleaseId = 13;
+		private const int _defaultTeamId = 32;
+
 		public ToolkitService _service = new ToolkitService();
 		public List<WPItemModel> _lsvlocalData = new List<WPItemModel>();
 		public List<WPItemModel> _wpItemsLocal = new List<WPItemModel>();
@@ -27,6 +43,7 @@ namespace CreateWorkPackages3
 			InitializeComponent();
 
 			MapDataFromDetailGridViewToPlanningGridView(tabDetailsPlan_Planning_Iteration);
+			//MapDataFromDetailGridViewToPlanningGridView();
 
 			yourToolTip.ToolTipIcon = ToolTipIcon.Warning;
 			yourToolTip.IsBalloon = true;
@@ -258,7 +275,19 @@ namespace CreateWorkPackages3
 		//}
 
 		public void MapDataFromDetailGridViewToPlanningGridView(TableLayoutPanel planningRow)
+		//public void MapDataFromDetailGridViewToPlanningGridView()
 		{
+			tabDetailsPlan_Planning_Iteration.ColumnStyles.Clear();
+			tabDetailsPlan_Planning_Iteration.RowStyles.Clear();
+			tabDetailsPlan_Planning_Iteration.Controls.Clear();
+			planningRow = tabDetailsPlan_Planning_Iteration;
+			//planningRow.Controls.Clear();
+			//planningRow.RowCount = 0;
+			//planningRow.Dispose();
+
+			//var planningRow = new TableLayoutPanel();
+			//this.Controls.Add(planningRow);
+
 			planningRow.CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble;
 			_iterationsPlanning = new List<IterationPlanningModel>();
 			var witdh1stColumn = 300F;
@@ -305,7 +334,10 @@ namespace CreateWorkPackages3
 			{
 				weekRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn });
 			}
-			weekRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Week" }, 0, 0);
+
+			var weekLabel = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Week" };
+			weekLabel.DoubleClick += new System.EventHandler(ActionLabel_RefreshTheToolkitData);
+			weekRow.Controls.Add(weekLabel, 0, 0);
 
 			for (int i = 1; i <= durationInWeeks.Count; i++)
 			{
@@ -554,6 +586,113 @@ namespace CreateWorkPackages3
 			{
 				item.BackColor = Color.Transparent;
 			}
+		}
+
+		private void ActionLabel_RefreshTheToolkitData(object sender, EventArgs e)
+		{
+			PullLatestData(_defaultReleaseId.ToString(), string.Empty, _defaultTeamId.ToString());
+		}
+
+		private void PullLatestData(string selectedReleaseId, string selectedIterationId, string selectedTeamId)
+		{
+			Parallel.Invoke(() =>
+			{
+				try
+				{
+					_service.GetFeatures(selectedReleaseId, _defaultTeamId.ToString());
+
+					_service.GetAllocation(_defaultTeamId.ToString());
+					_service.GetAllocationAdjustments(_defaultTeamId.ToString());
+
+					_service.GetUserStories();
+					_service.GetWorkpackages(selectedReleaseId);
+
+					BuildDailyTrack();
+					BuildProgressTracking(_lsvlocalData);
+
+					MapDataFromDetailGridViewToPlanningGridView(tabDetailsPlan_Planning_Iteration);
+				}
+				catch (Exception exp)
+				{
+					//Log("Error connecting to Sharepoint API: " + exp.Message + "Feature disabled." + "\r\n");
+				}
+			});
+		}
+
+		private void BuildDailyTrack()
+		{
+			foreach (var fe in _service._features)
+			{
+				var selectedUSs = _service._us.Where(u => u.FieldValues["Case"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["Case"]).LookupId == fe.Id).ToList();
+				foreach (var us in selectedUSs)
+				{
+					var selectedWPs = _service._wps.Where(u => u.FieldValues["FunctionalScenario"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["FunctionalScenario"]).LookupId == us.Id).ToList();
+					foreach (var wp in selectedWPs)
+					{
+						var assignee = wp.FieldValues["AssignedTo"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["AssignedTo"]).LookupValue;
+						var team = wp.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Team"]).LookupValue;
+
+						DateTime? startDate = null;
+						if (wp.FieldValues["StartDate"] != null)
+							startDate = DateTime.Parse(wp.FieldValues["StartDate"].ToString()).Date;
+						DateTime? dueDate = null;
+						if (wp.FieldValues["DueDate"] != null)
+							dueDate = DateTime.Parse(wp.FieldValues["DueDate"].ToString()).Date;
+
+						var iterationId = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupId.ToString();
+						var iterationName = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupValue;
+
+						var dependOnWPIds = wp.FieldValues["Depend_x0020_on"] != null && (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[]).Count() > 0
+					? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Contains(";")
+						? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Split(';')[0]
+						: (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue
+					: string.Empty;
+
+						_lsvlocalData.Add(new WPItemModel()
+						{
+							FeatureId = fe.Id,
+							Feature = fe.FieldValues["Title"].ToString(),
+							USId = us.Id,
+							USTitle = us.FieldValues["Title"].ToString(),
+							WPAssignee = assignee,
+							WPStart = startDate,
+							WPDueDate = dueDate,
+							WPEstimate = wp.FieldValues[_column_Estimate] == null ? string.Empty : wp.FieldValues[_column_Estimate].ToString(),
+							WPId = wp.Id,
+							WPRemainingHour = wp.FieldValues["RemainingWork"] == null ? string.Empty : wp.FieldValues["RemainingWork"].ToString(),
+							WPSpentHour = wp.FieldValues["TimeSpent"] == null ? string.Empty : wp.FieldValues["TimeSpent"].ToString(),
+							WPStatus = wp.FieldValues[_column_Status] == null ? string.Empty : wp.FieldValues[_column_Status].ToString(),
+							WPTeam = team,
+							WPTitle = wp.FieldValues["Title"] == null ? string.Empty : wp.FieldValues["Title"].ToString(),
+							WPType = wp.FieldValues[_column_WpType] == null ? string.Empty : wp.FieldValues[_column_WpType].ToString(),
+							WPIterationId = iterationId,
+							WPIterationName = iterationName,
+							WPDependOn = dependOnWPIds
+						});
+					}
+				}
+			}
+
+			_lsvlocalData.SortPriority();
+			_lsvlocalData = _lsvlocalData
+				.OrderBy(d => d.FeatureShow)
+				.ThenBy(d => d.WPPriority)
+				.ToList();
+		}
+
+		//private void LoadDailyTrack()
+		//{
+		//	var clonedData = new List<WPItemModel>();
+		//	_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
+		//	Daily_DataGridView.DataSource = clonedData;
+		//	Daily_Load_filter_combobox_data();
+		//}
+
+		private void BuildProgressTracking(List<WPItemModel> dataSource)
+		{
+			_wpItemsLocal = new List<WPItemModel>();
+			dataSource.ForEach(l => _wpItemsLocal.Add(l.DeepCopy()));
+
 		}
 	}
 }

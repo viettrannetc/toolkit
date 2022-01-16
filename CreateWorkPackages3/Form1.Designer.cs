@@ -1491,17 +1491,20 @@ namespace CreateWorkPackages3
 			// 
 			this.label26.Location = new System.Drawing.Point(84, 111);
 			this.label26.Name = "label26";
-			this.label26.Size = new System.Drawing.Size(13, 14);
+			this.label26.Size = new System.Drawing.Size(115, 23);
 			this.label26.TabIndex = 0;
+			this.label26.Text = "aaaaaaaaaaaaaaaaa";
 			this.label26.DragDrop += new System.Windows.Forms.DragEventHandler(this.label26_DragDrop);
 			this.label26.DragEnter += new System.Windows.Forms.DragEventHandler(this.label26_DragEnter);
 			this.label26.DragOver += new System.Windows.Forms.DragEventHandler(this.label26_DragOver);
 			this.label26.DragLeave += new System.EventHandler(this.label26_DragLeave);
+			this.label26.MouseDown += new System.Windows.Forms.MouseEventHandler(this.label26_MouseDown);
 			this.label26.MouseLeave += new System.EventHandler(this.label26_MouseLeave);
 			this.label26.MouseHover += new System.EventHandler(this.label26_MouseHover);
 			// 
 			// tableLayoutPanel3
 			// 
+			this.tableLayoutPanel3.AllowDrop = true;
 			this.tableLayoutPanel3.CellBorderStyle = System.Windows.Forms.TableLayoutPanelCellBorderStyle.Single;
 			this.tableLayoutPanel3.ColumnCount = 2;
 			this.tableLayoutPanel3.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));

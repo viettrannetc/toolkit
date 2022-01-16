@@ -14,6 +14,8 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static CreateWorkPackages3.Extension.ObjectExtension;
+using NDragDrop;
+using FluentDragDrop;
 
 namespace CreateWorkPackages3
 {
@@ -71,19 +73,21 @@ namespace CreateWorkPackages3
 			PullLatestData(_defaultReleaseId.ToString(), string.Empty, _defaultTeamId.ToString());
 
 
-			string fname = $@"{System.IO.Directory.GetCurrentDirectory()}\..\..\..\BusinessLibrary\Resource\Icon\running.png";
-			var bmp = Bitmap.FromFile(fname);
-			var thumb = (Bitmap)bmp.GetThumbnailImage(8, 8, null, IntPtr.Zero);
-			thumb.MakeTransparent();
-			var icon = Icon.FromHandle(thumb.GetHicon());
-			label26.Image = icon.ToBitmap();
-			//label26.Width = 100;
-			//label26.AutoSize = false;
-			label26.Text = "If you set the label to AutoSize, it will automatically grow with whatever text you put in it. (This includes vertical growth.)";
-			label26.TextAlign = ContentAlignment.MiddleLeft;
-			label26.ImageAlign = ContentAlignment.MiddleRight;
-			label26.MaximumSize = new Size(100, 0);
-			label26.AutoSize = true;
+			//string fname = $@"{System.IO.Directory.GetCurrentDirectory()}\..\..\..\BusinessLibrary\Resource\Icon\running.png";
+			//var bmp = Bitmap.FromFile(fname);
+			//var thumb = (Bitmap)bmp.GetThumbnailImage(8, 8, null, IntPtr.Zero);
+			//thumb.MakeTransparent();
+			//var icon = Icon.FromHandle(thumb.GetHicon());
+			//label26.Image = icon.ToBitmap();
+			////label26.Width = 100;
+			////label26.AutoSize = false;
+			//label26.Text = "If you set the label to AutoSize, it will automatically grow with whatever text you put in it. (This includes vertical growth.)";
+			//label26.TextAlign = ContentAlignment.MiddleLeft;
+			//label26.ImageAlign = ContentAlignment.MiddleRight;
+			//label26.MaximumSize = new Size(100, 0);
+			//label26.AutoSize = true;
+
+
 		}
 		~Form1()
 		{
@@ -264,6 +268,7 @@ namespace CreateWorkPackages3
 					BuildDailyTrack();
 					LoadDailyTrack();
 					BuildProgressTracking(_lsvlocalData);
+					OpenPlanningForm();
 				}
 				catch (Exception exp)
 				{
@@ -540,6 +545,62 @@ namespace CreateWorkPackages3
 		private void label26_MouseLeave(object sender, EventArgs e)
 		{
 
+		}
+
+		private void OpenPlanningForm()
+		{
+			var openForm = Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Name == "PlanningForm");
+			if (openForm != null)
+			{
+				openForm.Close();
+			}
+
+			var frm = new PlanningForm(_wpItemsLocal, _service);
+			frm.Show();
+		}
+
+		private async void label26_MouseDown(object sender, MouseEventArgs e)
+		{
+			//var source = (Label)sender;
+			//var target = source.Equals(listLeft) ? listRight : listLeft;
+
+			//source.InitializeDragAndDrop()
+			//	.Move()
+			//	.OnMouseMove()
+			//	.If(() => source.SelectedIndices.Count > 0)
+			//	.WithData(() => source.SelectedItems.OfType<ListViewItem>().ToArray())
+			//	.WithPreview((_, data) => RenderPreview(data)).BehindCursor()
+			//	.To(target, MoveItems);
+
+			Services s = new Services();
+			string url = "https://localhost:44385/WeatherForecast";
+			var result = await s.Get<dynamic>(url);
+
+
+
+			var expectedWps = _lsvlocalData;
+			var expectedFeatures = new List<ToolKitFeatureModel>();
+			foreach (var item in _lsvlocalData)
+			{
+				if (!expectedFeatures.Any(f => f.Id == item.FeatureId.ToString() && f.Name == item.Feature))
+					expectedFeatures.Add(new ToolKitFeatureModel { Id = item.FeatureId.ToString(), Name = item.Feature });
+			}
+			
+
+			url = "https://localhost:44385/toolkit/feature";
+			await s.Post<bool>(url, expectedFeatures);
+
+			url = "https://localhost:44385/toolkit/wp";
+			await s.Post<bool>(url, expectedWps);
+
+			url = "https://localhost:44385/toolkit/iteration";
+			await s.Post<bool>(url, _service._toolkitIterations);
+
+			url = "https://localhost:44385/toolkit/allocation";
+			await s.Post<bool>(url, _service._toolkitAllocationAdjustmentsModel);
+
+			url = "https://localhost:44385/toolkit/allocationadjustment";
+			await s.Post<bool>(url, _service._toolkitAllocationsModel);
 		}
 	}
 }
