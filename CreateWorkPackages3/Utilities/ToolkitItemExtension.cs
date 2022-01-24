@@ -276,7 +276,9 @@ namespace CreateWorkPackages3.Utilities
 		/// <returns></returns>
 		public static List<DateTime> CalculateDateProgressing(WPItemModel workpackage)
 		{
-			DateTime startDate = workpackage.WPStartDate;
+			if (!workpackage.WPStartDate.HasValue) return new List<DateTime>();
+
+			DateTime startDate = workpackage.WPStartDate.Value;
 			string allocatedResource = workpackage.WPAssignee;//TODO: implement allocated assignee
 			var workingDays = new List<DateTime>();
 

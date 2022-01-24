@@ -5,8 +5,9 @@ using System.Net;
 using System.Text;
 using BusinessLibrary.Models;
 using BusinessLibrary.Models.Planning;
+using BusinessLibrary.Services.Store;
+using CreateWorkPackages3.Utilities;
 using CreateWorkPackages3.Workpackages.Model;
-using Microsoft.SharePoint;
 using Microsoft.SharePoint.Client;
 
 namespace CreateWorkPackages3.Service
@@ -21,12 +22,18 @@ namespace CreateWorkPackages3.Service
 		public List<ToolkitFeatureResponseModel> _toolkitFeatures;
 		public ListItemCollection _us;
 		public ListItemCollection _wps;
+		public Dictionary<int, List<WPItemModel>> _wpHistories = new Dictionary<int, List<WPItemModel>>();
 		public ListItemCollection _defects;
 		public ListItemCollection _allocations;
 		public List<ToolkitAllocationResponseModel> _toolkitAllocationsModel;
 		public ListItemCollection _releases;
 		public ListItemCollection _iterations;
 		public List<ToolkitIterationModel> _toolkitIterations;
+
+		/// <summary>
+		/// latest data from toolkit
+		/// </summary>
+		public List<WPItemModel> _currentWPLocalData = new List<WPItemModel>();
 
 		private const string TitleField = "Title";
 		private const string EstimateField = "Estimate";
@@ -44,6 +51,18 @@ namespace CreateWorkPackages3.Service
 		private const string RemainingWorkField = "RemainingWork";
 		private const string DepenOnField = "Depend_x0020_on";
 		private const string StartDateField = "StartDate";
+
+		private const string _column_Feature = "Feature";
+		private const string _column_WpType = "WPType";
+		private const string _column_Status = "Status";
+		private const string _column_Start = "Start";
+		private const string _column_Assignee = "Assignee";
+		private const string _column_Estimate = "Estimate";
+		private const string _column_Remaining = "Remaining";
+		private const string _column_DependOn = "DependOn";
+		private const string _column_Spent = "Spent";
+		private const string _column_DueDate = "DueDate";
+		private const string _column_Iteration = "Iteration";
 
 		public void Connect(string username, string password)
 		{
@@ -102,7 +121,7 @@ namespace CreateWorkPackages3.Service
 		}
 
 
-		public void GetAllocationAdjustments(string teamId)
+		public void GetAllocationAdjustmentsByTeam(string teamId)
 		{
 			var infoList = _context.Web.Lists.GetByTitle("Allocation Adjustments");
 			//CamlQuery _query =  CamlQuery.CreateAllItemsQuery(100, parameters);
@@ -142,11 +161,11 @@ namespace CreateWorkPackages3.Service
 			_toolkitAllocationAdjustmentsModel = new List<ToolkitAllocationResponseModel>();
 			foreach (var item in _allocationadjustments)
 			{
-				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupValue;
-				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupId;
+				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Team"]).LookupValue;
+				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Team"]).LookupId;
 
-				var resourceLookupName = item.FieldValues["Resource"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Resource"]).LookupValue;
-				var resourceLookupId = item.FieldValues["Resource"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Resource"]).LookupId;
+				var resourceLookupName = item.FieldValues["Resource"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Resource"]).LookupValue;
+				var resourceLookupId = item.FieldValues["Resource"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Resource"]).LookupId;
 
 				DateTime? startDate = null;
 				if (item.FieldValues["DateFrom"] != null)
@@ -175,7 +194,7 @@ namespace CreateWorkPackages3.Service
 			}
 		}
 
-		public void GetAllocation(string teamId)
+		public void GetAllocationByTeam(string teamId)
 		{
 			var infoList = _context.Web.Lists.GetByTitle("Allocations");
 			//CamlQuery _query =  CamlQuery.CreateAllItemsQuery(100, parameters);
@@ -215,11 +234,11 @@ namespace CreateWorkPackages3.Service
 			_toolkitAllocationsModel = new List<ToolkitAllocationResponseModel>();
 			foreach (var item in _allocations)
 			{
-				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupValue;
-				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupId;
+				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Team"]).LookupValue;
+				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Team"]).LookupId;
 
-				var resourceLookupName = item.FieldValues["Resource"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Resource"]).LookupValue;
-				var resourceLookupId = item.FieldValues["Resource"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Resource"]).LookupId;
+				var resourceLookupName = item.FieldValues["Resource"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Resource"]).LookupValue;
+				var resourceLookupId = item.FieldValues["Resource"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Resource"]).LookupId;
 
 				DateTime? startDate = null;
 				if (item.FieldValues["DateFrom"] != null)
@@ -403,8 +422,8 @@ namespace CreateWorkPackages3.Service
 			_toolkitIterations = new List<ToolkitIterationModel>();
 			foreach (var item in _iterations)
 			{
-				var teamLookupName = item.FieldValues["Teams"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue[])item.FieldValues["Teams"])[0].LookupValue;
-				var teamLookupId = item.FieldValues["Teams"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue[])item.FieldValues["Teams"])[0].LookupId;
+				var teamLookupName = item.FieldValues["Teams"] == null ? string.Empty : ((FieldLookupValue[])item.FieldValues["Teams"])[0].LookupValue;
+				var teamLookupId = item.FieldValues["Teams"] == null ? 0 : ((FieldLookupValue[])item.FieldValues["Teams"])[0].LookupId;
 
 				DateTime startDate = DateTime.Parse(item.FieldValues["StartDate"].ToString()).Date;
 				DateTime dueDate = DateTime.Parse(item.FieldValues["EndDate"].ToString()).Date;
@@ -424,7 +443,8 @@ namespace CreateWorkPackages3.Service
 			}
 			_toolkitIterations = _toolkitIterations.OrderBy(t => t.StartDate).ToList();
 		}
-		public void GetFeatures(string releaseId)
+
+		public void GetFeaturesByRelease(string releaseId)
 		{
 			var query = new CamlQuery()
 			{
@@ -501,7 +521,7 @@ namespace CreateWorkPackages3.Service
 			_context.ExecuteQuery();
 		}
 
-		public void GetFeatures(string releaseId, string teamId)
+		public void GetFeaturesByTeam(string teamId)
 		{
 			var query = new CamlQuery()
 			{
@@ -510,16 +530,10 @@ namespace CreateWorkPackages3.Service
 				<Where>
 					<And>
 						<And>
-							<And>
-								<Eq>
-									<FieldRef LookupId='TRUE' Name='Release' />
-									<Value Type='Lookup'>{releaseId}</Value>
-								</Eq>
-								<Neq>
-									<FieldRef Name='Status' />
-									<Value Type='Choice'>90 - Closed</Value>
-								</Neq>
-							</And>
+							<Neq>
+								<FieldRef Name='Status' />
+								<Value Type='Choice'>90 - Closed</Value>
+							</Neq>															
 							<And>
 								<Neq>
 									<FieldRef Name='Status' />
@@ -542,12 +556,10 @@ namespace CreateWorkPackages3.Service
 									<Value Type='Lookup'>{teamId}</Value>
 								</Eq>
 							</And>
-							
-								<Neq>
-									<FieldRef Name='CaseType' />
-									<Value Type='Choice'>Governance</Value>
-								</Neq>
-							
+							<Neq>
+								<FieldRef Name='CaseType' />
+								<Value Type='Choice'>Governance</Value>
+							</Neq>
 						</And>
 					</And>
 				</Where>
@@ -583,14 +595,14 @@ namespace CreateWorkPackages3.Service
 			_toolkitFeatures = new List<ToolkitFeatureResponseModel>();
 			foreach (var item in _features)
 			{
-				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupValue;
-				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupId;
+				var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Team"]).LookupValue;
+				var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Team"]).LookupId;
 
-				var releaseName = item.FieldValues["Release"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Release"]).LookupValue;
-				var releaseLookupId = item.FieldValues["Release"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Release"]).LookupId;
+				var releaseName = item.FieldValues["Release"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Release"]).LookupValue;
+				var releaseLookupId = item.FieldValues["Release"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Release"]).LookupId;
 
-				//var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupValue;
-				//var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((Microsoft.SharePoint.Client.FieldLookupValue)item.FieldValues["Team"]).LookupId;
+				//var teamLookupName = item.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)item.FieldValues["Team"]).LookupValue;
+				//var teamLookupId = item.FieldValues["Team"] == null ? 0 : ((FieldLookupValue)item.FieldValues["Team"]).LookupId;
 
 				DateTime? dueDate = null;
 				if (item.FieldValues["DueDate"] != null)
@@ -601,8 +613,8 @@ namespace CreateWorkPackages3.Service
 					Id = item.Id,
 					Title = item.FieldValues["Title"].ToString(),
 					Status = item.FieldValues["Status"].ToString(),
-					RemainingWork = decimal.Parse(item.FieldValues["RemainingWork"].ToString()),
-					DueDate = dueDate,
+					RemainingWork = item.FieldValues["RemainingWork"] == null ? 0 : decimal.Parse(item.FieldValues["RemainingWork"].ToString()),
+					DueDate = dueDate ?? null,
 					Team = new ToolkitLookupModel
 					{
 						LookupId = teamLookupId,
@@ -615,10 +627,10 @@ namespace CreateWorkPackages3.Service
 					}
 				});
 			}
-			_toolkitIterations = _toolkitIterations.OrderBy(t => t.StartDate).ToList();
+			_toolkitFeatures = _toolkitFeatures.OrderBy(t => t.Release.LookupId).ThenBy(t => t.Title).ToList();
 		}
 
-		public void GetUserStories()
+		public void GetUserStoriesByFeatureIds()
 		{
 			var featureIds = _features.Select(f => f.Id).ToList();
 			var xmlText = new StringBuilder();
@@ -716,7 +728,7 @@ namespace CreateWorkPackages3.Service
 			}
 		}
 
-		public void GetWorkpackages(string releaseId)
+		public void GetWorkpackagesByUsIds()
 		{
 			var usIds = _us.Select(f => f.Id).ToList();
 			var featureIds = _features.Select(f => f.Id).ToList();
@@ -796,6 +808,7 @@ namespace CreateWorkPackages3.Service
 									<FieldRef Name='RelatedCase' />
 									<FieldRef Name='Iteration' />
 									<FieldRef Name='Depend_x0020_on' />
+									<FieldRef Name='_UIVersionString' />
 							   </ViewFields>
 							   <QueryOptions />
 							</View>"
@@ -806,7 +819,6 @@ namespace CreateWorkPackages3.Service
 			//_wps = _context.Web.Lists.GetByTitle(title).GetItems(_query);
 			//_context.Load(_wps, uitems => uitems);
 			//_context.ExecuteQuery();
-
 
 			_wps = _context.Web.Lists.GetByTitle(title).GetItems(query);
 			_context.Load(_wps, uitems => uitems.Include(
@@ -825,11 +837,111 @@ namespace CreateWorkPackages3.Service
 				item => item["RelatedCase"],
 				item => item["DueDate"],
 				item => item["StartDate"],
-				item => item["Depend_x0020_on"] //Depend on WP's IDs, split multiple values by ';'
+				item => item["Depend_x0020_on"], //Depend on WP's IDs, split multiple values by ';'
+				item => item["_UIVersionString"]
 				));
 
 			_context.ExecuteQuery();
+
+			SyncWorkpackageHistoryToLocal();
+
 		}
+
+		private void SyncWorkpackageHistoryToLocal()
+		{
+			try
+			{
+				_wpHistories = WorkpackageGetBackupHistory();
+				var newChanges = new List<WPItemModel>();
+				foreach (var wp in _wps)
+				{
+					if (_wpHistories.Keys.Contains(wp.Id)) //perhaps only add newer versions
+					{
+						var latestVersionFromDatabase = _wpHistories[wp.Id].OrderByDescending(v => v.Version).First().Version;
+						if (latestVersionFromDatabase < int.Parse(wp.FieldValues["_UIVersionString"].ToString().Split('.')[0])) //add newer versions
+						{
+							var newHistories = GetWorkpackagesByWorkpackageVersionId(wp, latestVersionFromDatabase);
+							if (!_wpHistories.Keys.Any(k => k == wp.Id))
+							{
+								_wpHistories.Add(wp.Id, newHistories);
+								newChanges.AddRange(newHistories);
+							}
+							else
+							{
+								var existingVersions = _wpHistories[wp.Id].Select(v => v.Version).ToList();
+								var newVersions = newHistories.Where(nh => !existingVersions.Contains(nh.Version)).ToList();
+								_wpHistories[wp.Id].AddRange(newVersions);
+								newChanges.AddRange(newVersions);
+							}
+						}
+					}
+					else //add to database 
+					{
+						var newHistories = GetWorkpackagesByWorkpackageVersionId(wp, 0);
+						if (!_wpHistories.Keys.Any(k => k == wp.Id))
+						{
+							_wpHistories.Add(wp.Id, newHistories);
+							newChanges.AddRange(newHistories);
+						}
+					}
+				}
+
+				if (newChanges.Any())
+					WorkpackageSaveBackupHistory(newChanges);
+			}
+			catch (Exception ex)
+			{
+
+				throw;
+			}
+		}
+
+		public List<WPItemModel> GetWorkpackagesByWorkpackageVersionId(ListItem history, int latestVersionId)
+		{
+			var historyItems = history.Versions;
+			_context.Load(historyItems, uitems => uitems.Include(
+				item => item["Title"],
+				item => item["Team"],
+				item => item["Estimate"],
+				item => item["AssignedTo"],
+				item => item["Status"],
+				item => item["TimeSpent"],
+				item => item["WPType"],
+				item => item["FunctionalScenario"],
+				item => item["RemainingWork"],
+				item => item["Iteration"],
+				item => item["Release"],
+				item => item["RelatedCase"],
+				item => item["DueDate"],
+				item => item["StartDate"],
+				item => item["Depend_x0020_on"], //Depend on WP's IDs, split multiple values by ';'
+				item => item["_UIVersionString"],
+				item => item["Modified"]
+				));
+			_context.ExecuteQuery();
+
+			var result = ConverWorkpackpageModel(null, null, history.Id, historyItems);
+			return result;
+		}
+
+		public void WorkpackageSaveBackupHistory(List<WPItemModel> newChanges)
+		{
+			var csv = new CSV();
+			string filename = $@"{Environment.CurrentDirectory}\..\..\Workpackages\History\workpackage.csv";
+			csv.Write(filename, newChanges);
+		}
+
+		public Dictionary<int, List<WPItemModel>> WorkpackageGetBackupHistory()
+		{
+			var csv = new CSV();
+			string filename = $@"{Environment.CurrentDirectory}\..\..\Workpackages\History\workpackage.csv";
+			var result = csv.Get<WPItemModel>(filename);
+
+			var t1 = result.GroupBy(u => u.WPId).ToDictionary(g => g.Key, g => g.ToList());
+
+			return t1;
+		}
+
 		public void GetDefects() { }
 		public void GetAllocations() { }
 
@@ -908,15 +1020,22 @@ namespace CreateWorkPackages3.Service
 				if (!string.IsNullOrEmpty(wp.StartDate))
 					startDate = Convert.ToDateTime(wp.StartDate).Date;
 
-				toolkitItem[StatusField] = wp.Status;
-				toolkitItem[EstimateField] = wp.Estimate;
+				if (!string.IsNullOrEmpty(wp.Status))
+					toolkitItem[StatusField] = wp.Status;
+
+				if (!string.IsNullOrEmpty(wp.Estimate))
+					toolkitItem[EstimateField] = wp.Estimate;
+
 				toolkitItem[RemainingWorkField] = wp.RemainingWork.Contains(',')
 					? wp.RemainingWork.Replace(',', '.')
 					: wp.RemainingWork;
+
 				//toolkitItem[WPTypeField] = wp.WPType;
 				toolkitItem[DueDateField] = dueDate;
+
 				//toolkitItem[ReleaseField] = new FieldLookupValue { LookupId = wp.Release };
 				//toolkitItem[TeamField] = new FieldLookupValue { LookupId = wp.Team };
+
 				toolkitItem[AssignedToField] = new FieldUserValue() { LookupId = wp.AssigneeId };
 				toolkitItem[IterationField] = new FieldLookupValue() { LookupId = wp.IterationId ?? 0 };
 				toolkitItem[StartDateField] = startDate;
@@ -1057,6 +1176,142 @@ namespace CreateWorkPackages3.Service
 			_context.ExecuteQuery();
 
 			return ((FieldLookupValue)(selectedUs[0].FieldValues["Release"])).LookupId;
+		}
+
+		public List<WPItemModel> BuildWorkpackpageModel(ListItemCollection features, ListItemCollection userStories, ListItemCollection workpackages)
+		{
+			var result = new List<WPItemModel>();
+			foreach (var fe in features)
+			{
+				var selectedUSs = userStories.Where(u => u.FieldValues["Case"] != null && ((FieldLookupValue)u.FieldValues["Case"]).LookupId == fe.Id).ToList();
+				foreach (var us in selectedUSs)
+				{
+					var selectedWPs = workpackages.Where(u => u.FieldValues["FunctionalScenario"] != null && ((FieldLookupValue)u.FieldValues["FunctionalScenario"]).LookupId == us.Id).ToList();
+					foreach (var wp in selectedWPs)
+					{
+						var assignee = wp.FieldValues["AssignedTo"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["AssignedTo"]).LookupValue;
+						var team = wp.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Team"]).LookupValue;
+
+						DateTime? startDate = null;
+						if (wp.FieldValues["StartDate"] != null)
+							startDate = DateTime.Parse(wp.FieldValues["StartDate"].ToString()).Date;
+						DateTime? dueDate = null;
+						if (wp.FieldValues["DueDate"] != null)
+							dueDate = DateTime.Parse(wp.FieldValues["DueDate"].ToString()).Date;
+
+						var iterationId = wp.FieldValues["Iteration"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Iteration"]).LookupId.ToString();
+						var iterationName = wp.FieldValues["Iteration"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Iteration"]).LookupValue;
+
+						var dependOnWPIds = wp.FieldValues["Depend_x0020_on"] != null && (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[]).Count() > 0
+					? (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue.Contains(";")
+						? (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue.Split(';')[0]
+						: (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue
+					: string.Empty;
+
+						result.Add(new WPItemModel()
+						{
+							FeatureId = fe.Id,
+							Feature = fe.FieldValues["Title"].ToString(),
+							USId = us.Id,
+							USTitle = us.FieldValues["Title"].ToString(),
+							WPAssignee = assignee,
+							WPStart = startDate,
+							WPDueDate = dueDate,
+							WPEstimate = wp.FieldValues[_column_Estimate] == null ? string.Empty : wp.FieldValues[_column_Estimate].ToString(),
+							WPId = wp.Id,
+							WPRemainingHour = wp.FieldValues["RemainingWork"] == null ? string.Empty : wp.FieldValues["RemainingWork"].ToString(),
+							WPSpentHour = wp.FieldValues["TimeSpent"] == null ? string.Empty : wp.FieldValues["TimeSpent"].ToString(),
+							WPStatus = wp.FieldValues[_column_Status] == null ? string.Empty : wp.FieldValues[_column_Status].ToString(),
+							WPTeam = team,
+							WPTitle = wp.FieldValues["Title"] == null ? string.Empty : wp.FieldValues["Title"].ToString(),
+							WPType = wp.FieldValues[_column_WpType] == null ? string.Empty : wp.FieldValues[_column_WpType].ToString(),
+							WPIterationId = iterationId,
+							WPIterationName = iterationName,
+							WPDependOn = dependOnWPIds,
+							Version = wp.FieldValues["_UIVersionString"] == null ? 0 : int.Parse(wp.FieldValues["_UIVersionString"].ToString().Split('.')[0]),
+							VersionDate = DateTime.Parse(wp.FieldValues["Modified"].ToString()).Date
+						});
+					}
+				}
+			}
+
+			result.SortPriority();
+			result = result
+				.OrderBy(d => d.FeatureShow)
+				.ThenBy(d => d.WPPriority)
+				.ToList();
+
+			_currentWPLocalData = result;
+			return result;
+		}
+
+		public List<WPItemModel> ConverWorkpackpageModel(ListItem fe, ListItem us, int workPackageId, ListItemVersionCollection workpackages)
+		{
+			var result = new List<WPItemModel>();
+			foreach (var wp in workpackages)
+			{
+				var assignee = wp.FieldValues["AssignedTo"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["AssignedTo"]).LookupValue;
+				var team = wp.FieldValues["Team"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Team"]).LookupValue;
+
+				DateTime? startDate = null;
+				if (wp.FieldValues["StartDate"] != null)
+					startDate = DateTime.Parse(wp.FieldValues["StartDate"].ToString()).Date;
+				DateTime? dueDate = null;
+				if (wp.FieldValues["DueDate"] != null)
+					dueDate = DateTime.Parse(wp.FieldValues["DueDate"].ToString()).Date;
+
+				var iterationId = wp.FieldValues["Iteration"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Iteration"]).LookupId.ToString();
+				var iterationName = wp.FieldValues["Iteration"] == null ? string.Empty : ((FieldLookupValue)wp.FieldValues["Iteration"]).LookupValue;
+
+				var dependOnWPIds = wp.FieldValues["Depend_x0020_on"] != null
+									&& (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[]).Count() > 0
+										? (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue.Contains(";")
+											? (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue.Split(';')[0]
+											: (wp.FieldValues["Depend_x0020_on"] as FieldLookupValue[])[0].LookupValue
+										: string.Empty;
+
+				result.Add(new WPItemModel()
+				{
+					FeatureId = fe == null
+						? ((FieldLookupValue)wp.FieldValues["RelatedCase"]).LookupId
+						: fe.Id,
+					Feature = fe == null
+						? ((FieldLookupValue)wp.FieldValues["RelatedCase"]).LookupValue
+						: fe.FieldValues["Title"].ToString(),
+					USId = us == null
+						? wp.FieldValues["FunctionalScenario"] == null
+							? 0
+							: ((FieldLookupValue)wp.FieldValues["FunctionalScenario"]).LookupId
+						: us.Id,
+					USTitle = us == null
+						? wp.FieldValues["FunctionalScenario"] == null
+							? ""
+							: ((FieldLookupValue)wp.FieldValues["FunctionalScenario"]).LookupValue
+						: us.FieldValues["Title"].ToString(),
+					WPAssignee = assignee,
+					WPStart = startDate,
+					WPDueDate = dueDate,
+					WPEstimate = wp.FieldValues[_column_Estimate] == null ? string.Empty : wp.FieldValues[_column_Estimate].ToString(),
+					WPId = workPackageId,
+					WPRemainingHour = wp.FieldValues["RemainingWork"] == null ? string.Empty : wp.FieldValues["RemainingWork"].ToString(),
+					WPSpentHour = wp.FieldValues["TimeSpent"] == null ? string.Empty : wp.FieldValues["TimeSpent"].ToString(),
+					WPStatus = wp.FieldValues[_column_Status] == null ? string.Empty : wp.FieldValues[_column_Status].ToString(),
+					WPTeam = team,
+					WPTitle = wp.FieldValues["Title"] == null ? string.Empty : wp.FieldValues["Title"].ToString(),
+					WPType = wp.FieldValues[_column_WpType] == null ? string.Empty : wp.FieldValues[_column_WpType].ToString(),
+					WPIterationId = iterationId,
+					WPIterationName = iterationName,
+					WPDependOn = dependOnWPIds,
+					Version = wp.FieldValues["_UIVersionString"] == null ? 0 : int.Parse(wp.FieldValues["_UIVersionString"].ToString().Split('.')[0]),
+					VersionDate = DateTime.Parse(wp.FieldValues["Modified"].ToString()).Date
+				});
+			}
+
+			result = result
+				.OrderBy(d => d.FeatureShow)
+				.ToList();
+
+			return result;
 		}
 	}
 }

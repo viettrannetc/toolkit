@@ -99,19 +99,19 @@ namespace CreateWorkPackages3
 			//timeline.Add(new BarInformation("Row 2", new DateTime(2015, 12, 21), new DateTime(2015, 12, 22, 12, 0, 0), Color.Yellow, Color.Khaki, 1));
 			//timeline.Add(new BarInformation("Row 1", new DateTime(2015, 12, 17), new DateTime(2015, 12, 24), Color.LawnGreen, Color.Khaki, 0));
 
-			var clonedData = new List<WPItemModel>();
-			_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
+			//var clonedData = new List<WPItemModel>();
+			//_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
 
-			foreach (var item in clonedData)
-			{
-				if (item.WPStart.HasValue && item.WPDueDate.HasValue)
-				{
-					timeline.Add(new BarInformation($"{item.FeatureShow}-{item.WPTitle} ({item.WPType})",
-					  item.WPStart.Value, //					new DateTime(2015, 12, 17),
-					  item.WPDueDate.Value, //				new DateTime(2015, 12, 24),
-					  Color.LawnGreen, Color.Khaki, 0));
-				}
-			}
+			//foreach (var item in clonedData)
+			//{
+			//	if (item.WPStart.HasValue && item.WPDueDate.HasValue)
+			//	{
+			//		timeline.Add(new BarInformation($"{item.FeatureShow}-{item.WPTitle} ({item.WPType})",
+			//		  item.WPStart.Value, //					new DateTime(2015, 12, 17),
+			//		  item.WPDueDate.Value, //				new DateTime(2015, 12, 24),
+			//		  Color.LawnGreen, Color.Khaki, 0));
+			//	}
+			//}
 
 			foreach (BarInformation bar in timeline)
 			{

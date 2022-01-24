@@ -44,5 +44,7 @@ namespace BusinessLibrary.Common
 		/// </summary>
 		public static string SharepointObject_Query_Format = @"https://goto.netcompany.com/cases/GTE747/NCDPP/_api/Web/Lists/GetByTitle('{0}')/Items?$filter=Modified gt datetime'{1}'&$select={2}";
 
+		public static int _defaultReleaseId = 13;
+		public static int _defaultTeamId = 32;
 	}
 }

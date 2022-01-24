@@ -38,7 +38,7 @@ namespace BusinessLibrary.Models.Planning
 		{
 			get
 			{
-				return $"{FeatureId} - {Feature} - {USId} - {WPId}";
+				return $"{FeatureShow} - {USShow} - {WPId}";
 			}
 		}
 		public string WPType { get; set; }
@@ -62,10 +62,13 @@ namespace BusinessLibrary.Models.Planning
 		/// <summary>
 		/// This is local data to sort from the ganttchart - calculated by Dependency 
 		/// </summary>
-		public DateTime WPStartDate { get; set; }
+		public DateTime? WPStartDate { get; set; }
 		/// <summary>
 		/// This is local data to sort from the ganttchart - calculated by Dependency 
 		/// </summary>
 		public List<DateTime> WPDateProgressing { get; set; }
+
+		public int Version { get; set; }
+		public DateTime VersionDate { get; set; }
 	}
 }

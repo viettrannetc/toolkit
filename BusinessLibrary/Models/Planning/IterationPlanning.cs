@@ -14,6 +14,7 @@ namespace BusinessLibrary.Models.Planning
 		public int Year { get; set; }
 		public int Month { get; set; }
 		public List<int> Weeks { get; set; }
+		public int IterationOrder { get; set; }
 		public int IterationId { get; set; }
 		public string IterationName { get; set; }
 		public abstract decimal AvailableHours { get; }
@@ -23,21 +24,31 @@ namespace BusinessLibrary.Models.Planning
 		public abstract IterationPlanningStatusModel Status { get; }
 	}
 
-	public class IterationPlanningModel : PlanningModel
+	public partial class IterationPlanningModel : PlanningModel
 	{
 		public IterationPlanningModel()
 		{
 			People = new List<IterationPeoplePlanningModel>();
-			WorkPackages = new List<WPItemModel>();
+			WorkPackagesActualInIteration = new List<WPItemModel>();
 			Weeks = new List<int>();
+			DaysInIteration = new List<DateTime>();
+			WorkingDaysInIteration = new List<DateTime>();
+			WorkPackagesHistory = new List<WPItemModel>();
 		}
 
-		public IterationPlanningModel(ToolkitIterationModel toolkitIterationModel, List<ToolkitAllocationResponseModel> toolkitAllocations, List<ToolkitAllocationResponseModel> toolkitAllocationAdjustments)
+		public IterationPlanningModel(ToolkitIterationModel toolkitIterationModel, List<ToolkitAllocationResponseModel> toolkitAllocations, List<ToolkitAllocationResponseModel> toolkitAllocationAdjustments, List<WPItemModel> workPackageHistories)
 			: base()
 		{
 			People = new List<IterationPeoplePlanningModel>();
-			WorkPackages = new List<WPItemModel>();
+			WorkPackagesActualInIteration = new List<WPItemModel>();
 			Weeks = new List<int>();
+			DaysInIteration = new List<DateTime>();
+			WorkingDaysInIteration = new List<DateTime>();
+			WorkPackagesHistory = new List<WPItemModel>();
+
+			WorkPackagesHistory = workPackageHistories;
+
+
 
 			//From Iteration Model
 			//	Get all working days in iteration
@@ -55,10 +66,10 @@ namespace BusinessLibrary.Models.Planning
 
 			Year = toolkitIterationModel.StartDate.Date.Year;
 			Month = toolkitIterationModel.StartDate.Date.Month;
-			IterationId = int.Parse(toolkitIterationModel.Title.Split(' ')[toolkitIterationModel.Title.Split(' ').Count() - 1]);
+			IterationOrder = int.Parse(toolkitIterationModel.Title.Split(' ')[toolkitIterationModel.Title.Split(' ').Count() - 1]);
 			IterationName = toolkitIterationModel.Title;
-
-			var workingDaysInIteration = new List<DateTime>();
+			IterationId = toolkitIterationModel.Id;
+			//var workingDaysInIteration = new List<DateTime>();
 			var currentDate = toolkitIterationModel.StartDate.Date;
 			while (currentDate <= toolkitIterationModel.EndDate)
 			{
@@ -67,8 +78,11 @@ namespace BusinessLibrary.Models.Planning
 
 				if (!currentDate.IsWeekend() && !currentDate.IsInHolidayGlobal() && !currentDate.IsInHolidayCountry("Viet Nam"))
 				{
-					workingDaysInIteration.Add(currentDate.Date);
+					WorkingDaysInIteration.Add(currentDate.Date);
 				}
+
+				DaysInIteration.Add(currentDate.Date);
+
 				currentDate = currentDate.AddDays(1);
 			}
 
@@ -79,7 +93,7 @@ namespace BusinessLibrary.Models.Planning
 			{
 				var member = new IterationPeoplePlanningModel();
 				member.Name = allocationMemberByTeam.Resource.LookupValue;
-				foreach (var workingDay in workingDaysInIteration)
+				foreach (var workingDay in WorkingDaysInIteration)
 				{
 					if (allocationMemberByTeam.DateFrom.Value.Date <= workingDay.Date && workingDay.Date <= allocationMemberByTeam.DateTo.Value.Date)
 					{
@@ -97,7 +111,7 @@ namespace BusinessLibrary.Models.Planning
 			{
 				var member = People.FirstOrDefault(p => p.Name == allocationAdjustmentMemberByTeam.Resource.LookupValue);
 				if (member == null) continue;
-				foreach (var workingDay in workingDaysInIteration)
+				foreach (var workingDay in WorkingDaysInIteration)
 				{
 					if (allocationAdjustmentMemberByTeam.DateFrom.Value.Date <= workingDay.Date && workingDay.Date <= allocationAdjustmentMemberByTeam.DateTo.Value.Date)
 					{
@@ -112,15 +126,17 @@ namespace BusinessLibrary.Models.Planning
 					}
 				}
 			}
+
+			AllocatedWp();
 		}
 
-		public List<IterationFeaturePlanningModel> Items
+		public List<IterationFeaturePlanningModel> ActionItems
 		{
 			get
 			{
 				var result = new List<IterationFeaturePlanningModel>();
 
-				foreach (var workPackage in WorkPackages)
+				foreach (var workPackage in WorkPackagesActualInIteration)
 				{
 					var existingFeature = result.FirstOrDefault(r => r.Feature == workPackage.FeatureShow);
 					if (existingFeature == null)
@@ -133,9 +149,11 @@ namespace BusinessLibrary.Models.Planning
 					{
 						existingFeature.Actions.Add(new IterationFeatureItemPlanningModel
 						{
-							Feature = workPackage.USShow,
+							UserStory = workPackage.USShow,
+							Feature = workPackage.WPShow,
 							WPText = $"{workPackage.WPType} ({workPackage.WPRemainingHour}/{workPackage.WPEstimate})",
-							Status = workPackage.WPStatus
+							Status = workPackage.WPStatus,
+							WPId = workPackage.WPId
 						});
 						existingFeature.TotalHours += decimal.Parse(workPackage.WPRemainingHour);
 					}
@@ -148,8 +166,12 @@ namespace BusinessLibrary.Models.Planning
 			}
 		}
 
+		public List<DateTime> DaysInIteration { get; set; }
+		public List<DateTime> WorkingDaysInIteration { get; set; }
+
 		public List<IterationPeoplePlanningModel> People { get; set; }
-		public List<WPItemModel> WorkPackages { get; set; }
+		public List<WPItemModel> WorkPackagesHistory { get; set; }
+		public List<WPItemModel> WorkPackagesActualInIteration { get; set; }
 		public override decimal AvailableHours
 		{
 			get
@@ -164,7 +186,7 @@ namespace BusinessLibrary.Models.Planning
 				//StringBuilder a = new StringBuilder();
 				//a.AppendLine($"
 
-				return WorkPackages.Sum(p => decimal.Parse(p.WPRemainingHour));
+				return WorkPackagesActualInIteration.Sum(p => decimal.Parse(p.WPRemainingHour));
 			}
 		}
 		public override decimal AllocatedHours
@@ -172,9 +194,11 @@ namespace BusinessLibrary.Models.Planning
 			get
 			{
 				var employees = People.Select(p => p.Name).ToList();
-				return WorkPackages.Where(w => employees.Contains(w.WPAssignee)).Sum(p => decimal.Parse(p.WPRemainingHour));
+				return WorkPackagesActualInIteration.Where(w => employees.Contains(w.WPAssignee)).Sum(p => decimal.Parse(p.WPRemainingHour));
 			}
 		}
+
+
 
 		public override IterationPlanningStatusModel Status
 		{
@@ -183,44 +207,56 @@ namespace BusinessLibrary.Models.Planning
 				var availableHours = AvailableHours;
 				var workloadInIteration = Workload;
 				var allocatedHours = AllocatedHours;
-				if (availableHours * 1.15M <= workloadInIteration)
-					return new IterationPlanningStatusModel(Color.Yellow, $"Workload ({workloadInIteration}) is higher than available hours ({availableHours})");
-
-				if (availableHours * 1.3M <= workloadInIteration)
+				if (availableHours * 1.1M <= workloadInIteration)
 					return new IterationPlanningStatusModel(Color.Red, $"Workload ({workloadInIteration}) is much higher than available hours ({availableHours})");
 
-				if (availableHours * 0.8M >= workloadInIteration)
-					return new IterationPlanningStatusModel(Color.LightGreen, $"The Iteration will properly need more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
+				if (availableHours * 0.9M <= workloadInIteration)
+					return new IterationPlanningStatusModel(Color.Yellow, $"Workload ({workloadInIteration}) is also the same as available hours ({availableHours}) - please prepare for urgent leave situations");
 
-				if (availableHours * 0.5M >= workloadInIteration)
-					return new IterationPlanningStatusModel(Color.Green, $"The Iteration needs more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
+				//if (allocatedHours <= workloadInIteration * 0.5M)
+				//	return new IterationPlanningStatusModel(Color.Red, $"Please allocate the WP for the team member - there are {workloadInIteration - allocatedHours} hours haven't been assigned");
+
+				//if (availableHours * 1.15M <= workloadInIteration)
+				//	return new IterationPlanningStatusModel(Color.Yellow, $"Workload ({workloadInIteration}) is higher than available hours ({availableHours})");
 
 				if (allocatedHours <= workloadInIteration * 0.8M)
 					return new IterationPlanningStatusModel(Color.Yellow, $"There are {workloadInIteration - allocatedHours} hours haven't been assigned");
 
-				if (allocatedHours <= workloadInIteration * 0.5M)
-					return new IterationPlanningStatusModel(Color.Red, $"Please allocate the WP for the team member - there are {workloadInIteration - allocatedHours} hours haven't been assigned");
+				//if (availableHours * 0.8M >= workloadInIteration)
+				//	return new IterationPlanningStatusModel(Color.LightGreen, $"The Iteration will properly need more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
 
-				return new IterationPlanningStatusModel(Color.White, $"");
+				//if (availableHours * 0.5M >= workloadInIteration)
+				//	return new IterationPlanningStatusModel(Color.Green, $"The Iteration needs more work packages - there are {availableHours - workloadInIteration} hours haven't been used");
+
+				return new IterationPlanningStatusModel(Color.Green, $"");
 			}
 		}
 
-		public void RefreshWp(List<WPItemModel> workPackages)
+		private void AllocatedWp()
 		{
-			WorkPackages = new List<WPItemModel>();
-			WorkPackages = workPackages;
+			var workPackagesInDictionary = WorkPackagesHistory
+				.GroupBy(wh => wh.WPId)
+				.ToDictionary(wh => wh.Key, wh => wh.OrderByDescending(whi => whi.Version).First());
+			var workPackages = workPackagesInDictionary.Select(wp => wp.Value).ToList();
 
-			RefreshAllocatedWp();
-		}
 
-		private void RefreshAllocatedWp()
-		{
+			var wpsInIteration = workPackages.Where(w => !string.IsNullOrEmpty(w.WPIterationId) && int.Parse(w.WPIterationId) == IterationId).ToList();
+			//planningIteration.AllocatedWp(wpsInIteration);
+
+			WorkPackagesActualInIteration = new List<WPItemModel>();
+			WorkPackagesActualInIteration = wpsInIteration;
+
 			foreach (var person in People)
 			{
-				var wpsForPerson = WorkPackages.Where(w => w.WPAssignee == person.Name).ToList();
+				var wpsForPerson = WorkPackagesActualInIteration.Where(w => w.WPAssignee == person.Name).ToList();
 				person.WorkPackages = wpsForPerson;
 			}
 		}
+
+		//private void AssignedWp()
+		//{
+
+		//}
 
 	}
 
@@ -247,6 +283,7 @@ namespace BusinessLibrary.Models.Planning
 	public class IterationFeatureItemPlanningModel
 	{
 		public string Feature { get; set; }
+		public string UserStory { get; set; }
 		public string WPText { get; set; }
 		public string Status { get; set; }
 		public IconType Icon
@@ -268,6 +305,7 @@ namespace BusinessLibrary.Models.Planning
 				}
 			}
 		}
+		public int WPId { get; set; }
 	}
 
 	public class IterationPlanningStatusModel

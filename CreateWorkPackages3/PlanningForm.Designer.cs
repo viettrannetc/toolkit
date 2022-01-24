@@ -52,7 +52,6 @@ namespace CreateWorkPackages3
 			// tabDetailsPlan_Planning_Iteration
 			// 
 			this.tabDetailsPlan_Planning_Iteration.AllowDrop = true;
-			this.tabDetailsPlan_Planning_Iteration.AutoScroll = true;
 			this.tabDetailsPlan_Planning_Iteration.ColumnCount = 2;
 			this.tabDetailsPlan_Planning_Iteration.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
 			this.tabDetailsPlan_Planning_Iteration.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));

@@ -1,8 +1,11 @@
 ﻿using BusinessLibrary.Models.Planning;
 using BusinessLibrary.Models.Planning.Extension;
+using BusinessLibrary.Ultilities;
 using CreateWorkPackages3.Extension;
+using CreateWorkPackages3.Forms.UpdateForm;
 using CreateWorkPackages3.Service;
 using CreateWorkPackages3.Utilities;
+using CreateWorkPackages3.Workpackages.Model;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -31,19 +34,18 @@ namespace CreateWorkPackages3
 		private const int _defaultTeamId = 32;
 
 		public ToolkitService _service = new ToolkitService();
-		public List<WPItemModel> _lsvlocalData = new List<WPItemModel>();
-		public List<WPItemModel> _wpItemsLocal = new List<WPItemModel>();
+		public List<WPItemModel> _currentWpItemsLocal = new List<WPItemModel>();
 		public ToolTip yourToolTip = new ToolTip();
 		private Dictionary<string, List<Label>> actionLabels = new Dictionary<string, List<Label>>();
+		List<IterationPlanningModel> _iterationsPlanning = new List<IterationPlanningModel>();
 
-		public PlanningForm(List<WPItemModel> wpsList, ToolkitService service)
+		public PlanningForm(List<WPItemModel> currentWpsList, ToolkitService service)
 		{
 			_service = service;
-			_wpItemsLocal = wpsList;
+			_currentWpItemsLocal = currentWpsList;
 			InitializeComponent();
 
-			MapDataFromDetailGridViewToPlanningGridView(tabDetailsPlan_Planning_Iteration);
-			//MapDataFromDetailGridViewToPlanningGridView();
+			DrawPlanningGridView(tabDetailsPlan_Planning_Iteration);
 
 			yourToolTip.ToolTipIcon = ToolTipIcon.Warning;
 			yourToolTip.IsBalloon = true;
@@ -59,249 +61,40 @@ namespace CreateWorkPackages3
 		#region Planning - Iteration
 
 
-		List<IterationPlanningModel> _iterationsPlanning = new List<IterationPlanningModel>();
+
 
 		/// <summary>
 		/// https://stackoverflow.com/questions/22420503/add-row-dynamically-in-tablelayoutpanel
 		/// </summary>
 		/// <param name="planningRow"></param>
-		//public void MapDataFromDetailGridViewToPlanningGridView(TableLayoutPanel panel)
-		//{
-		//	//Map Data From DetailGridView To _iterationPlanning
-		//	//ReLoad tabDetailsPlan_Planning_Iteration by _iterationPlanning
-		//	panel.CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble;
-		//	_iterationsPlanning = new List<IterationPlanningModel>();
-		//	var witdh1stColumn = 300F;
-		//	var witdhMinumumColumn = 80F;
-		//	var heightMinumumRow = 30F;
-
-		//	foreach (var iteration in _service._toolkitIterations)
-		//	{
-		//		var planningIteration = _iterationsPlanning.FirstOrDefault(i => i.IterationName == iteration.Title);
-		//		if (planningIteration == null)
-		//		{
-		//			planningIteration = new IterationPlanningModel(iteration, _service._toolkitAllocationsModel, _service._toolkitAllocationAdjustmentsModel);
-		//			var allocatedWps = _wpItemsLocal.Where(w => !string.IsNullOrEmpty(w.WPIterationId) && int.Parse(w.WPIterationId) == iteration.Id).ToList();
-		//			planningIteration.RefreshWp(allocatedWps);
-
-		//			_iterationsPlanning.Add(planningIteration);
-		//		}
-		//	}
-
-		//	_iterationsPlanning = _iterationsPlanning
-		//		.OrderBy(d => d.Year)
-		//		.ThenBy(d => d.Month)
-		//		//.ThenBy(d => d.Weeks)
-		//		.ThenBy(d => d.Iteration)
-		//		.ToList();
-
-		//	//var numberOfRows = _iterationsPlanning.SelectMany(i => i.Items.SelectMany(f => f.Feature)).Distinct().ToList().Count + 5;
-
-		//	panel.RowStyles.Clear();
-		//	panel.ColumnStyles.Clear();
-
-		//	panel.Dock = DockStyle.Fill;
-		//	panel.ColumnCount = 1;
-		//	panel.RowCount = 1;// numberOfRows;
-
-		//	//#region 1st row - Month
-		//	//var durationInMonths = _iterationsPlanning.Select(i => i.Month).Distinct().ToList();
-		//	//var firstRow = new TableLayoutPanel()
-		//	//{
-		//	//	Dock = DockStyle.Fill,
-		//	//	ColumnCount = durationInMonths.Count + 1,
-		//	//	RowCount = 1,
-		//	//};
-		//	//for (int i = 0; i < firstRow.ColumnCount; i++)
-		//	//{
-		//	//	firstRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhminumumColumn * 4 });
-		//	//}
-		//	//firstRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Month" }, 0, 0);
-
-		//	//for (int i = 1; i <= durationInMonths.Count; i++)
-		//	//{
-		//	//	firstRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = durationInMonths[i - 1].ToString() }, i, 0);
-		//	//}
-		//	//panel.Controls.Add(firstRow, 0, 0);
-		//	//panel.RowStyles.Insert(0, new RowStyle(SizeType.Absolute, heightMinumumRow)); 
-		//	//#endregion
-
-		//	#region 1st row - Week
-		//	//panel.RowCount = panel.RowCount + 1;
-		//	var durationInWeeks = _iterationsPlanning.SelectMany(i => i.Weeks).Distinct().ToList();
-		//	var secondRow = new TableLayoutPanel()
-		//	{
-		//		Dock = DockStyle.Fill,
-		//		ColumnCount = durationInWeeks.Count + 1,
-		//		RowCount = 1,
-		//	};
-		//	for (int i = 0; i < secondRow.ColumnCount; i++)
-		//	{
-		//		secondRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn });
-		//	}
-		//	secondRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Week" }, 0, 0);
-
-		//	for (int i = 1; i <= durationInWeeks.Count; i++)
-		//	{
-		//		secondRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = durationInWeeks[i - 1].ToString() }, i, 0);
-		//	}
-		//	panel.Controls.Add(secondRow, 0, panel.RowCount - 1);
-		//	panel.RowStyles.Insert(panel.RowCount - 1, new RowStyle(SizeType.Absolute, heightMinumumRow));
-		//	#endregion
-
-		//	#region 2nd row - Iteration
-		//	panel.RowCount = panel.RowCount + 1;
-		//	var iterations = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
-		//	var thirdRow = new TableLayoutPanel()
-		//	{
-		//		Dock = DockStyle.Fill,
-		//		ColumnCount = iterations.Count + 1,
-		//		RowCount = 1,
-		//	};
-		//	for (int i = 0; i < thirdRow.ColumnCount; i++)
-		//	{
-		//		var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
-
-		//		thirdRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
-		//	}
-		//	thirdRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Iteration" }, 0, 0);
-		//	thirdRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
-		//	for (int i = 1; i <= iterations.Count; i++)
-		//	{
-		//		var showingIteration = _iterationsPlanning.First(d => d.Iteration == i);
-		//		var label = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = iterations[i - 1].ToString(), BackColor = showingIteration.Status.Color };
-		//		thirdRow.Controls.Add(label, i, 0);
-		//		var content = $"{showingIteration.Status.ToolTip}\r\n{Environment.NewLine}{Label_Iteration_DetailContent(showingIteration)}";
-		//		yourToolTip.SetToolTip(label, content);
-		//	}
-		//	panel.Controls.Add(thirdRow, 0, panel.RowCount - 1);
-		//	panel.RowStyles.Insert(panel.RowCount - 1, new RowStyle(SizeType.Absolute, heightMinumumRow));
-		//	#endregion
-
-		//	#region 3rd row - Available / Workload / Allocated
-		//	panel.RowCount = panel.RowCount + 1;
-		//	var numberOfColumnIn4thRow = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
-		//	var fourthRow = new TableLayoutPanel()
-		//	{
-		//		Dock = DockStyle.Fill,
-		//		ColumnCount = numberOfColumnIn4thRow.Count + 1,
-		//		RowCount = 1,
-		//	};
-		//	for (int i = 0; i < fourthRow.ColumnCount; i++)
-		//	{
-		//		var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
-
-		//		fourthRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
-		//	}
-		//	fourthRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Available/Workload/Allocated" }, 0, 0);
-		//	for (int i = 1; i <= numberOfColumnIn4thRow.Count; i++)
-		//	{
-		//		var iteration = _iterationsPlanning.First(it => it.Iteration == numberOfColumnIn4thRow[i - 1]);
-		//		fourthRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{iteration.AvailableHours}/{iteration.Workload}/{iteration.AllocatedHours}" }, i, 0);
-
-		//		//var showingIteration = _iterationsPlanning.First(d => d.Iteration == i);
-		//		//var label = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{showingIteration.AvailableHours}/{showingIteration.Workload}/{showingIteration.AllocatedHours}", BackColor = showingIteration.Status.Color };
-		//		//thirdRow.Controls.Add(label, i, 0);
-		//		//yourToolTip.SetToolTip(label, showingIteration.Status.ToolTip);
-		//	}
-		//	panel.Controls.Add(fourthRow, 0, panel.RowCount - 1);
-		//	panel.RowStyles.Insert(panel.RowCount - 1, new RowStyle(SizeType.Absolute, heightMinumumRow));
-		//	#endregion
-
-
-
-		//	#region From 5th rows, the game is start
-
-		//	panel.RowCount = panel.RowCount + 1;
-		//	var lastPanelRow = new TableLayoutPanel()
-		//	{
-		//		Dock = DockStyle.Fill,
-		//		ColumnCount = 1,
-		//		RowCount = 1,
-		//		AutoScroll = true
-		//	};
-		//	panel.Controls.Add(lastPanelRow, 0, panel.RowCount - 1);
-
-		//	var numberOfColumnInRow = _iterationsPlanning.Select(i => i.Iteration).Distinct().ToList();
-		//	var lastRow = 3;
-		//	foreach (var feature in _service._toolkitFeatures)
-		//	{
-		//		lastPanelRow.RowCount = lastPanelRow.RowCount + 1;
-		//		var nextRow = new TableLayoutPanel()
-		//		{
-		//			Dock = DockStyle.Fill,
-		//			ColumnCount = numberOfColumnInRow.Count + 1,
-		//			RowCount = 1,
-		//			CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble
-		//		};
-
-		//		var relavantIterations = _iterationsPlanning.Where(i => i.WorkPackages.Any(w => w.FeatureId == feature.Id)).ToList();
-
-		//		for (int i = 0; i < nextRow.ColumnCount; i++)
-		//		{
-		//			var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.Iteration == i);
-		//			nextRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
-		//		}
-		//		nextRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{feature.Title} - ({feature.Id})" }, 0, 0);
-
-		//		for (int i = 1; i <= numberOfColumnInRow.Count; i++)
-		//		{
-		//			var iteration = relavantIterations.FirstOrDefault(it => it.Iteration == numberOfColumnIn4thRow[i - 1]);
-		//			if (iteration == null) continue;
-
-		//			var selectedFeature = iteration.Items.First(f => f.Feature == $"{feature.Id} - {feature.Title}");
-		//			var actions = selectedFeature.Actions;
-		//			var content = new StringBuilder();
-		//			foreach (var action in actions)
-		//			{
-		//				content.AppendLine($"{action.Item2}{Environment.NewLine}");
-		//			}
-
-		//			//nextRow.Controls.Add(new Label() { TextAlign = ContentAlignment.TopLeft, Dock = DockStyle.Fill, Text = $"{string.Join(" + ", actions)}" }, i, 0);
-		//			nextRow.Controls.Add(new Label()
-		//			{
-		//				TextAlign = ContentAlignment.TopLeft,
-		//				Dock = DockStyle.Fill,
-		//				Text = $"{content}",
-		//			}, i, 0);
-		//		}
-		//		lastPanelRow.Controls.Add(nextRow, 0, lastRow + 1);
-
-		//		lastRow++;
-		//		panel.RowStyles.Insert(lastRow - 1, new RowStyle(SizeType.AutoSize));
-		//	}
-
-		//	#endregion
-		//}
-
-		public void MapDataFromDetailGridViewToPlanningGridView(TableLayoutPanel planningRow)
-		//public void MapDataFromDetailGridViewToPlanningGridView()
+		public void DrawPlanningGridView(TableLayoutPanel planningRow)
 		{
 			tabDetailsPlan_Planning_Iteration.ColumnStyles.Clear();
 			tabDetailsPlan_Planning_Iteration.RowStyles.Clear();
 			tabDetailsPlan_Planning_Iteration.Controls.Clear();
 			planningRow = tabDetailsPlan_Planning_Iteration;
-			//planningRow.Controls.Clear();
-			//planningRow.RowCount = 0;
-			//planningRow.Dispose();
 
-			//var planningRow = new TableLayoutPanel();
-			//this.Controls.Add(planningRow);
+			planningRow.HorizontalScroll.Enabled = true;
+			planningRow.AutoScroll = true;
+			planningRow.AutoSize = false;
 
 			planningRow.CellBorderStyle = TableLayoutPanelCellBorderStyle.InsetDouble;
 			_iterationsPlanning = new List<IterationPlanningModel>();
 			var witdh1stColumn = 300F;
-			var witdhMinumumColumn = 85F;
+			//var witdhMinumumColumn = 85F;
+			//var witdhMinumumColumn = 120F;
+			var witdhIterationColumn = 190F;
 			var heightMinumumRow = 30F;
-
+			var wphistories = _service._wpHistories.SelectMany(wh => wh.Value).ToList();
 			foreach (var iteration in _service._toolkitIterations)
 			{
 				var planningIteration = _iterationsPlanning.FirstOrDefault(i => i.IterationName == iteration.Title);
 				if (planningIteration == null)
 				{
-					planningIteration = new IterationPlanningModel(iteration, _service._toolkitAllocationsModel, _service._toolkitAllocationAdjustmentsModel);
-					var allocatedWps = _wpItemsLocal.Where(w => !string.IsNullOrEmpty(w.WPIterationId) && int.Parse(w.WPIterationId) == iteration.Id).ToList();
-					planningIteration.RefreshWp(allocatedWps);
+					planningIteration = new IterationPlanningModel(iteration, _service._toolkitAllocationsModel, _service._toolkitAllocationAdjustmentsModel, wphistories);
+
+					//var wpsInIteration = _currentWpItemsLocal.Where(w => !string.IsNullOrEmpty(w.WPIterationId) && int.Parse(w.WPIterationId) == iteration.Id).ToList();
+					//planningIteration.AllocatedWp(wpsInIteration);
 
 					_iterationsPlanning.Add(planningIteration);
 				}
@@ -310,7 +103,7 @@ namespace CreateWorkPackages3
 			_iterationsPlanning = _iterationsPlanning
 				.OrderBy(d => d.Year)
 				.ThenBy(d => d.Month)
-				.ThenBy(d => d.IterationId)
+				.ThenBy(d => d.IterationOrder)
 				.ToList();
 
 			planningRow.RowStyles.Clear();
@@ -319,37 +112,9 @@ namespace CreateWorkPackages3
 			planningRow.Dock = DockStyle.Fill;
 			planningRow.ColumnCount = 1;
 			planningRow.RowCount = 1;// numberOfRows;
-			planningRow.AutoScroll = true;
-
-			#region 1st row - Week
-			var durationInWeeks = _iterationsPlanning.SelectMany(i => i.Weeks).Distinct().ToList();
-
-			var weekRow = new TableLayoutPanel()
-			{
-				Dock = DockStyle.Fill,
-				ColumnCount = durationInWeeks.Count + 1,
-				RowCount = 1,
-			};
-			for (int i = 0; i < weekRow.ColumnCount; i++)
-			{
-				weekRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn });
-			}
-
-			var weekLabel = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Week" };
-			weekLabel.DoubleClick += new System.EventHandler(ActionLabel_RefreshTheToolkitData);
-			weekRow.Controls.Add(weekLabel, 0, 0);
-
-			for (int i = 1; i <= durationInWeeks.Count; i++)
-			{
-				weekRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = durationInWeeks[i - 1].ToString() }, i, 0);
-			}
-			planningRow.Controls.Add(weekRow, 0, planningRow.RowCount - 1);
-			planningRow.RowStyles.Insert(planningRow.RowCount - 1, new RowStyle(SizeType.Absolute, heightMinumumRow));
-			#endregion
 
 			#region 2nd row - Iteration
-			planningRow.RowCount = planningRow.RowCount + 1;
-			var iterations = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
+			var iterations = _iterationsPlanning.Select(i => i.IterationOrder).Distinct().ToList();
 			var iterationRow = new TableLayoutPanel()
 			{
 				Dock = DockStyle.Fill,
@@ -358,19 +123,23 @@ namespace CreateWorkPackages3
 			};
 			for (int i = 0; i < iterationRow.ColumnCount; i++)
 			{
-				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
+				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationOrder == i);
 
-				iterationRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
+				iterationRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhIterationColumn });
 			}
-			iterationRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Iteration" }, 0, 0);
+
+			var titleIterationLabel = new Label() { TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill, Text = "Iteration" };
+			titleIterationLabel.DoubleClick += new System.EventHandler(ActionLabel_Click_ReloadTheToolkitData);
+			iterationRow.Controls.Add(titleIterationLabel, 0, 0);
 			iterationRow.RowStyles.Add(new RowStyle(SizeType.Absolute, 25F));
 			for (int i = 1; i <= iterations.Count; i++)
 			{
-				var showingIteration = _iterationsPlanning.First(d => d.IterationId == i);
-				var label = new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = iterations[i - 1].ToString(), BackColor = showingIteration.Status.Color };
-				iterationRow.Controls.Add(label, i, 0);
+				var showingIteration = _iterationsPlanning.First(d => d.IterationOrder == i);
+				var iterationLabel = new Label() { Name = showingIteration.IterationName, TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill, Text = $"{iterations[i - 1].ToString()} - Week ({string.Join(",", showingIteration.Weeks)})", BackColor = showingIteration.Status.Color };
+				iterationLabel.DoubleClick += new System.EventHandler(ActionLabel_Click_OpenIterationOverview);
+				iterationRow.Controls.Add(iterationLabel, i, 0);
 				var content = $"{showingIteration.Status.ToolTip}\r\n{Environment.NewLine}{Label_Iteration_DetailContent(showingIteration)}";
-				yourToolTip.SetToolTip(label, content);
+				yourToolTip.SetToolTip(iterationLabel, content);
 			}
 			planningRow.Controls.Add(iterationRow, 0, planningRow.RowCount - 1);
 			planningRow.RowStyles.Insert(planningRow.RowCount - 1, new RowStyle(SizeType.Absolute, heightMinumumRow));
@@ -378,7 +147,7 @@ namespace CreateWorkPackages3
 
 			#region 3rd row - Available / Workload / Allocated
 			planningRow.RowCount = planningRow.RowCount + 1;
-			var numberOfColumnIn4thRow = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
+			var numberOfColumnIn4thRow = _iterationsPlanning.Select(i => i.IterationOrder).Distinct().ToList();
 			var availableRow = new TableLayoutPanel()
 			{
 				Dock = DockStyle.Fill,
@@ -387,14 +156,14 @@ namespace CreateWorkPackages3
 			};
 			for (int i = 0; i < availableRow.ColumnCount; i++)
 			{
-				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
+				var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationOrder == i);
 
-				availableRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
+				availableRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhIterationColumn });
 			}
-			availableRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = "Available/Workload/Allocated" }, 0, 0);
+			availableRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleLeft, Dock = DockStyle.Fill, Text = "Available/Workload/Allocated" }, 0, 0);
 			for (int i = 1; i <= numberOfColumnIn4thRow.Count; i++)
 			{
-				var iteration = _iterationsPlanning.First(it => it.IterationId == numberOfColumnIn4thRow[i - 1]);
+				var iteration = _iterationsPlanning.First(it => it.IterationOrder == numberOfColumnIn4thRow[i - 1]);
 				availableRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"{iteration.AvailableHours}/{iteration.Workload}/{iteration.AllocatedHours}" }, i, 0);
 			}
 			planningRow.Controls.Add(availableRow, 0, planningRow.RowCount - 1);
@@ -414,7 +183,7 @@ namespace CreateWorkPackages3
 			};
 			planningRow.Controls.Add(featuresRow, 0, planningRow.RowCount - 1);
 
-			var numberOfColumnInRow = _iterationsPlanning.Select(i => i.IterationId).Distinct().ToList();
+			var numberOfColumnInRow = _iterationsPlanning.Select(i => i.IterationOrder).Distinct().ToList();
 
 			for (int featureIndex = 0; featureIndex < _service._toolkitFeatures.Count; featureIndex++)
 			{
@@ -429,26 +198,26 @@ namespace CreateWorkPackages3
 					RowCount = 1,
 					CellBorderStyle = TableLayoutPanelCellBorderStyle.Single
 				};
-				var relavantIterations = _iterationsPlanning.Where(i => i.WorkPackages.Any(w => w.FeatureId == feature.Id)).ToList();
+				var relavantIterations = _iterationsPlanning.Where(i => i.WorkPackagesActualInIteration.Any(w => w.FeatureId == feature.Id)).ToList();
 
 				//auto generate style for all columns
 				for (int i = 0; i < featureRow.ColumnCount; i++)
 				{
-					var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationId == i);
-					featureRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhMinumumColumn * showingIteration.Weeks.Count() });
+					var showingIteration = _iterationsPlanning.FirstOrDefault(d => d.IterationOrder == i);
+					featureRow.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute) { Width = i == 0 ? witdh1stColumn : witdhIterationColumn });// witdhMinumumColumn * showingIteration.Weeks.Count() });
 				}
 
 				//Add feature name to the 1st column
-				featureRow.Controls.Add(new Label() { TextAlign = ContentAlignment.MiddleCenter, Dock = DockStyle.Fill, Text = $"({feature.Id}) - {feature.Title}" }, 0, 0);
+				featureRow.Controls.Add(new Label() { TextAlign = ContentAlignment.TopLeft, Dock = DockStyle.Fill, Text = $"{feature.Id} - {feature.Title}" }, 0, 0);
 
 
 				//generate data for each cell - based on column & 1st row (start with row # = 0)
 				for (int i = 1; i <= numberOfColumnInRow.Count; i++)
 				{
-					var iteration = relavantIterations.FirstOrDefault(it => it.IterationId == numberOfColumnIn4thRow[i - 1]);
+					var iteration = relavantIterations.FirstOrDefault(it => it.IterationOrder == numberOfColumnIn4thRow[i - 1]);
 					if (iteration == null) continue;
 
-					var selectedFeature = iteration.Items.First(f => f.Feature == $"{feature.Id} - {feature.Title}");
+					var selectedFeature = iteration.ActionItems.First(f => f.Feature == $"{feature.Id} - {feature.Title}");
 					if (!selectedFeature.Actions.Any()) continue;
 
 					var lastActionRow = 0;
@@ -470,21 +239,23 @@ namespace CreateWorkPackages3
 
 						var actionLabel = new Label()
 						{
-							Name = $"{action.Feature}_{Guid.NewGuid()}_{actionIndex}",
+							Name = action.Feature,
 							Dock = DockStyle.Fill,
 							Text = action.WPText,
 							TextAlign = ContentAlignment.TopLeft,
 							Image = action.Icon.SetImage(12),
 							ImageAlign = ContentAlignment.TopRight,
 							//AutoSize = false
-							MaximumSize = new Size((int)(witdhMinumumColumn * iteration.Weeks.Count()) - 20, 0),
+							MaximumSize = new Size((int)witdhIterationColumn - 20, 0),//((int)(witdhMinumumColumn * iteration.Weeks.Count()) - 20, 0),
 							AutoSize = false
 						};
 						actionLabel.MouseLeave += new System.EventHandler(ActionLabel_MouseLeave);
 						actionLabel.MouseHover += new System.EventHandler(ActionLabel_MouseOver);
+						actionLabel.DoubleClick += new System.EventHandler(ActionLabel_Click_UpdateWPs);
 						ToolTip toolTip = new ToolTip();
-						toolTip.SetToolTip(actionLabel, action.Feature);
-						//ControlExtension.Draggable(actionLabel, true);
+						toolTip.SetToolTip(actionLabel, action.UserStory);
+
+						ControlExtension.Draggable(actionLabel, true);
 
 						if (!actionLabels.ContainsKey(action.Feature))
 							actionLabels.Add(action.Feature, new List<Label>() { actionLabel });
@@ -506,7 +277,7 @@ namespace CreateWorkPackages3
 				var findMaxHeight = 1;
 				foreach (var iteration in relavantIterations)
 				{
-					var actionsInFeatures = iteration.Items.Where(i => i.Feature.Contains(feature.Title)).ToList();
+					var actionsInFeatures = iteration.ActionItems.Where(i => i.Feature.Contains(feature.Title)).ToList();
 					foreach (var item in actionsInFeatures)
 					{
 						if (item.Actions.Count > findMaxHeight)
@@ -553,146 +324,135 @@ namespace CreateWorkPackages3
 
 		private void ActionLabel_MouseOver(object sender, EventArgs e)
 		{
-			//find all label in the same US
-			//set the background to Orange
-			var usName = ((Label)sender).Name.Split('_')[0];
+			var usId = ((Label)sender).Name.Split('-')[2];
 
-			var lstControls = actionLabels[usName];
+			var item = actionLabels.Keys.Where(k => k.Contains(usId.Trim()) == true).ToList();
+			if (item == null || !item.Any()) return;
 
-			foreach (var item in lstControls)
+			foreach (var key in item)
 			{
-				item.BackColor = Color.LightGray;
+				var lstControls = actionLabels[key];
+				foreach (var label in lstControls)
+				{
+					label.BackColor = Color.LightGray;
+				}
 			}
+
+
 		}
 
 		private void ActionLabel_MouseLeave(object sender, EventArgs e)
 		{
-			//find all label in the same US
-			//set the background to Orange
-			var usName = ((Label)sender).Name.Split('_')[0];
+			var usId = ((Label)sender).Name.Split('-')[2];
 
-			//var lstControls = new List<Label>();
-			//foreach (var control in this.Controls)
-			//{
-			//	if (control is Label && ((Label)control).Name.Contains(usName))
-			//	{
-			//		lstControls.Add((Label)control);
-			//	}
-			//}
+			var item = actionLabels.Keys.Where(k => k.Contains(usId.Trim()) == true).ToList();
+			if (item == null || !item.Any()) return;
 
-			var lstControls = actionLabels[usName];
-
-			foreach (var item in lstControls)
+			foreach (var key in item)
 			{
-				item.BackColor = Color.Transparent;
+				var lstControls = actionLabels[key];
+				foreach (var label in lstControls)
+				{
+					label.BackColor = Color.Transparent;
+				}
 			}
 		}
 
-		private void ActionLabel_RefreshTheToolkitData(object sender, EventArgs e)
+		private void ActionLabel_Click_OpenIterationOverview(object sender, EventArgs e)
 		{
-			PullLatestData(_defaultReleaseId.ToString(), string.Empty, _defaultTeamId.ToString());
+			var stringIteration = ((Label)sender).Name;
+			if (!string.IsNullOrEmpty(stringIteration))
+			{
+				var openForm = Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Name == "IterationForm");
+				if (openForm != null)
+				{
+					openForm.Close();
+				}
+
+				var wpsInSelectedIteration = _currentWpItemsLocal.Where(wp => wp.WPIterationName == stringIteration).ToList();
+
+				var frm = new IterationForm(wpsInSelectedIteration, _service);
+				frm.Show();
+			}
 		}
 
-		private void PullLatestData(string selectedReleaseId, string selectedIterationId, string selectedTeamId)
+		private void ActionLabel_Click_ReloadTheToolkitData(object sender, EventArgs e)
 		{
+			//TODO:
+			DrawPlanningGridView(tabDetailsPlan_Planning_Iteration);
+		}
+
+		#region Transfer data between Planning form vs Update WP 
+		private void ActionLabel_Click_UpdateWPs(object sender, EventArgs e)
+		{
+			//TODO:
+			//Change assignee
+			//Change iteration
+			//Change remaining hours/estimation
+			//Change status
+			var wpIdString = ((Label)sender).Name.Split('-')[((Label)sender).Name.Split('-').Count() - 1];
+			int wpId = 0;
+			if (!string.IsNullOrEmpty(wpIdString) && int.TryParse(wpIdString, out wpId))
+			{
+				var openForm = Application.OpenForms.Cast<Form>().FirstOrDefault(form => form.Name == "UpdateWP");
+				if (openForm != null)
+				{
+					openForm.Close();
+				}
+
+				var selectedWP = _currentWpItemsLocal.First(wp => wp.WPId == wpId);
+
+				var frm = new UpdateWP(selectedWP, RedrawPlanningGridView, _service);
+				frm.Show();
+			}
+		}
+
+		#region Delegation between Planning form vs Update WP 
+		/// <summary>
+		/// UpdateWP Form will call back to this action
+		/// </summary>
+		/// <param name="selectedWP"></param>
+		public delegate void UpdateWPAction(WPItemModel selectedWP);
+
+		private void RedrawPlanningGridView(WPItemModel selectedWP)
+		{
+			//Update expected WP to Local		- _wpItemsLocal
+			var replacedWp = _currentWpItemsLocal.First(wp => wp.WPId == selectedWP.WPId);
+			replacedWp.WPEstimate = selectedWP.WPEstimate;
+			replacedWp.WPRemainingHour = selectedWP.WPRemainingHour;
+			replacedWp.WPAssignee = selectedWP.WPAssignee;
+			replacedWp.WPIterationId = selectedWP.WPIterationId;
+
+			//update expected WP to Toolkit
 			Parallel.Invoke(() =>
 			{
 				try
 				{
-					_service.GetFeatures(selectedReleaseId, _defaultTeamId.ToString());
+					var toolkitWPItems = new List<ToolkitWPModel>();
 
-					_service.GetAllocation(_defaultTeamId.ToString());
-					_service.GetAllocationAdjustments(_defaultTeamId.ToString());
+					toolkitWPItems.Add(new ToolkitWPModel()
+					{
+						Id = replacedWp.WPId,
+						AssigneeId = string.IsNullOrWhiteSpace(replacedWp.WPAssignee)
+							? 213 //TODO: default is Vitra - how to clear assignee?
+							: Constains.Toolkit_Assignee.First(a => a.Value == replacedWp.WPAssignee).Key,
+						Estimate = replacedWp.WPEstimate,
+						RemainingWork = replacedWp.WPRemainingHour,
+						IterationId = int.Parse(replacedWp.WPIterationId)
+					});
 
-					_service.GetUserStories();
-					_service.GetWorkpackages(selectedReleaseId);
-
-					BuildDailyTrack();
-					BuildProgressTracking(_lsvlocalData);
-
-					MapDataFromDetailGridViewToPlanningGridView(tabDetailsPlan_Planning_Iteration);
+					_service.UpdateWP(toolkitWPItems);
 				}
 				catch (Exception exp)
 				{
 					//Log("Error connecting to Sharepoint API: " + exp.Message + "Feature disabled." + "\r\n");
 				}
 			});
+
+			DrawPlanningGridView(tabDetailsPlan_Planning_Iteration);
 		}
+		#endregion
 
-		private void BuildDailyTrack()
-		{
-			foreach (var fe in _service._features)
-			{
-				var selectedUSs = _service._us.Where(u => u.FieldValues["Case"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["Case"]).LookupId == fe.Id).ToList();
-				foreach (var us in selectedUSs)
-				{
-					var selectedWPs = _service._wps.Where(u => u.FieldValues["FunctionalScenario"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["FunctionalScenario"]).LookupId == us.Id).ToList();
-					foreach (var wp in selectedWPs)
-					{
-						var assignee = wp.FieldValues["AssignedTo"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["AssignedTo"]).LookupValue;
-						var team = wp.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Team"]).LookupValue;
-
-						DateTime? startDate = null;
-						if (wp.FieldValues["StartDate"] != null)
-							startDate = DateTime.Parse(wp.FieldValues["StartDate"].ToString()).Date;
-						DateTime? dueDate = null;
-						if (wp.FieldValues["DueDate"] != null)
-							dueDate = DateTime.Parse(wp.FieldValues["DueDate"].ToString()).Date;
-
-						var iterationId = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupId.ToString();
-						var iterationName = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupValue;
-
-						var dependOnWPIds = wp.FieldValues["Depend_x0020_on"] != null && (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[]).Count() > 0
-					? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Contains(";")
-						? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Split(';')[0]
-						: (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue
-					: string.Empty;
-
-						_lsvlocalData.Add(new WPItemModel()
-						{
-							FeatureId = fe.Id,
-							Feature = fe.FieldValues["Title"].ToString(),
-							USId = us.Id,
-							USTitle = us.FieldValues["Title"].ToString(),
-							WPAssignee = assignee,
-							WPStart = startDate,
-							WPDueDate = dueDate,
-							WPEstimate = wp.FieldValues[_column_Estimate] == null ? string.Empty : wp.FieldValues[_column_Estimate].ToString(),
-							WPId = wp.Id,
-							WPRemainingHour = wp.FieldValues["RemainingWork"] == null ? string.Empty : wp.FieldValues["RemainingWork"].ToString(),
-							WPSpentHour = wp.FieldValues["TimeSpent"] == null ? string.Empty : wp.FieldValues["TimeSpent"].ToString(),
-							WPStatus = wp.FieldValues[_column_Status] == null ? string.Empty : wp.FieldValues[_column_Status].ToString(),
-							WPTeam = team,
-							WPTitle = wp.FieldValues["Title"] == null ? string.Empty : wp.FieldValues["Title"].ToString(),
-							WPType = wp.FieldValues[_column_WpType] == null ? string.Empty : wp.FieldValues[_column_WpType].ToString(),
-							WPIterationId = iterationId,
-							WPIterationName = iterationName,
-							WPDependOn = dependOnWPIds
-						});
-					}
-				}
-			}
-
-			_lsvlocalData.SortPriority();
-			_lsvlocalData = _lsvlocalData
-				.OrderBy(d => d.FeatureShow)
-				.ThenBy(d => d.WPPriority)
-				.ToList();
-		}
-
-		//private void LoadDailyTrack()
-		//{
-		//	var clonedData = new List<WPItemModel>();
-		//	_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
-		//	Daily_DataGridView.DataSource = clonedData;
-		//	Daily_Load_filter_combobox_data();
-		//}
-
-		private void BuildProgressTracking(List<WPItemModel> dataSource)
-		{
-			_wpItemsLocal = new List<WPItemModel>();
-			dataSource.ForEach(l => _wpItemsLocal.Add(l.DeepCopy()));
-
-		}
+		#endregion
 	}
 }

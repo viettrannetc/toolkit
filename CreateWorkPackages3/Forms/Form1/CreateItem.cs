@@ -242,7 +242,7 @@ namespace CreateWorkPackages3
 				Note = wpNote,
 				Estimate = wpEstimation,
 				RemainingWork = wpEstimation,
-				Release = _defaultReleaseId,
+				Release = BusinessLibrary.Common.Configuration._defaultReleaseId,
 				WPType = WP_Random_WPType.SelectedItem.ToString(),
 				DueDate = DateTime.UtcNow.AddHours(int.Parse(wpEstimation)).ToString()
 			};

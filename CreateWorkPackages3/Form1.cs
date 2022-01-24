@@ -23,10 +23,7 @@ namespace CreateWorkPackages3
 	{
 		private readonly ToolkitService _service;
 
-		/// <summary>
-		/// latest data from toolkit
-		/// </summary>
-		private List<WPItemModel> _lsvlocalData = new List<WPItemModel>();
+
 
 		/// <summary>
 		/// Cloned latest data from toolkit
@@ -51,8 +48,7 @@ namespace CreateWorkPackages3
 		private const string _column_Spent = "Spent";
 		private const string _column_DueDate = "DueDate";
 		private const string _column_Iteration = "Iteration";
-		private const int _defaultReleaseId = 13;
-		private const int _defaultTeamId = 32;
+
 
 		public Form1()
 		{
@@ -70,7 +66,7 @@ namespace CreateWorkPackages3
 
 			CreateConnectionToSharepoint();
 			GetMetadataFromSharepoint();
-			PullLatestData(_defaultReleaseId.ToString(), string.Empty, _defaultTeamId.ToString());
+			PullLatestData(BusinessLibrary.Common.Configuration._defaultReleaseId.ToString(), string.Empty, BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
 
 
 			//string fname = $@"{System.IO.Directory.GetCurrentDirectory()}\..\..\..\BusinessLibrary\Resource\Icon\running.png";
@@ -87,7 +83,11 @@ namespace CreateWorkPackages3
 			//label26.MaximumSize = new Size(100, 0);
 			//label26.AutoSize = true;
 
-
+			//tableLayoutPanel3.HorizontalScroll.Enabled = true;
+			//tableLayoutPanel3.AutoSize = false;
+			//tableLayoutPanel3.AutoScroll = true;
+			//tableLayoutPanel3.ColumnStyles.Insert(0, new ColumnStyle() { SizeType = SizeType.Absolute, Width = 800F });
+			//tableLayoutPanel3.ColumnStyles.Insert(1, new ColumnStyle() { SizeType = SizeType.Absolute, Width = 900F });
 		}
 		~Form1()
 		{
@@ -124,7 +124,7 @@ namespace CreateWorkPackages3
 			try
 			{
 				_service.GetReleases();
-				_service.GetIterations(_defaultTeamId.ToString());
+				_service.GetIterations(BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
 
 				var release = _service._releases.ToList().Select(x => new { key = x.Id, value = x.FieldValues["Title"] }).ToList();
 				cbbRelease.DataSource = release;
@@ -190,8 +190,6 @@ namespace CreateWorkPackages3
 
 		private void PullLatestData_Click(object sender, EventArgs e)
 		{
-			_lsvlocalData = new List<WPItemModel>();
-
 			if (cbbRelease.SelectedItem == null)
 			{
 				Log("You need to choose a release.");
@@ -201,7 +199,7 @@ namespace CreateWorkPackages3
 			//var selectedReleaseId = cbbRelease.SelectedItem.GetPropValue("key").ToString();			
 			var selectedIterationId = Daily_Filter_cbb_Iteration.SelectedItem.GetPropValue("key").ToString();
 
-			PullLatestData(_defaultReleaseId.ToString(), selectedIterationId, _defaultTeamId.ToString());
+			PullLatestData(BusinessLibrary.Common.Configuration._defaultReleaseId.ToString(), selectedIterationId, BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
 		}
 
 
@@ -210,7 +208,8 @@ namespace CreateWorkPackages3
 			var result = new List<ListViewItem>();
 
 			var clonedData = new List<WPItemModel>();
-			_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
+			var currentWps = _service._currentWPLocalData;
+			currentWps.ForEach(l => clonedData.Add(l.DeepCopy()));
 
 			if (Daily_Filter_cbb_assignee.SelectedItem != null && int.Parse(Daily_Filter_cbb_assignee.SelectedItem.GetPropValue("key").ToString()) > 1)
 			{
@@ -257,17 +256,15 @@ namespace CreateWorkPackages3
 			{
 				try
 				{
-					_service.GetFeatures(selectedReleaseId, _defaultTeamId.ToString());
+					_service.GetFeaturesByTeam(BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
+					_service.GetAllocationByTeam(BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
+					_service.GetAllocationAdjustmentsByTeam(BusinessLibrary.Common.Configuration._defaultTeamId.ToString());
+					_service.GetUserStoriesByFeatureIds();
+					_service.GetWorkpackagesByUsIds();
+					_service.BuildWorkpackpageModel(_service._features, _service._us, _service._wps);
 
-					_service.GetAllocation(_defaultTeamId.ToString());
-					_service.GetAllocationAdjustments(_defaultTeamId.ToString());
-
-					_service.GetUserStories();
-					_service.GetWorkpackages(selectedReleaseId);
-
-					BuildDailyTrack();
-					LoadDailyTrack();
-					BuildProgressTracking(_lsvlocalData);
+					LoadDailyTrackTab();
+					BuildProgressTracking(_service._currentWPLocalData);
 					OpenPlanningForm();
 				}
 				catch (Exception exp)
@@ -277,77 +274,19 @@ namespace CreateWorkPackages3
 			});
 		}
 
-		private void BuildDailyTrack()
-		{
-			foreach (var fe in _service._features)
-			{
-				var selectedUSs = _service._us.Where(u => u.FieldValues["Case"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["Case"]).LookupId == fe.Id).ToList();
-				foreach (var us in selectedUSs)
-				{
-					var selectedWPs = _service._wps.Where(u => u.FieldValues["FunctionalScenario"] != null && ((Microsoft.SharePoint.Client.FieldLookupValue)u.FieldValues["FunctionalScenario"]).LookupId == us.Id).ToList();
-					foreach (var wp in selectedWPs)
-					{
-						var assignee = wp.FieldValues["AssignedTo"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["AssignedTo"]).LookupValue;
-						var team = wp.FieldValues["Team"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Team"]).LookupValue;
 
-						DateTime? startDate = null;
-						if (wp.FieldValues["StartDate"] != null)
-							startDate = DateTime.Parse(wp.FieldValues["StartDate"].ToString()).Date;
-						DateTime? dueDate = null;
-						if (wp.FieldValues["DueDate"] != null)
-							dueDate = DateTime.Parse(wp.FieldValues["DueDate"].ToString()).Date;
 
-						var iterationId = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupId.ToString();
-						var iterationName = wp.FieldValues["Iteration"] == null ? string.Empty : ((Microsoft.SharePoint.Client.FieldLookupValue)wp.FieldValues["Iteration"]).LookupValue;
-
-						var dependOnWPIds = wp.FieldValues["Depend_x0020_on"] != null && (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[]).Count() > 0
-					? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Contains(";")
-						? (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue.Split(';')[0]
-						: (wp.FieldValues["Depend_x0020_on"] as Microsoft.SharePoint.Client.FieldLookupValue[])[0].LookupValue
-					: string.Empty;
-
-						_lsvlocalData.Add(new WPItemModel()
-						{
-							FeatureId = fe.Id,
-							Feature = fe.FieldValues["Title"].ToString(),
-							USId = us.Id,
-							USTitle = us.FieldValues["Title"].ToString(),
-							WPAssignee = assignee,
-							WPStart = startDate,
-							WPDueDate = dueDate,
-							WPEstimate = wp.FieldValues[_column_Estimate] == null ? string.Empty : wp.FieldValues[_column_Estimate].ToString(),
-							WPId = wp.Id,
-							WPRemainingHour = wp.FieldValues["RemainingWork"] == null ? string.Empty : wp.FieldValues["RemainingWork"].ToString(),
-							WPSpentHour = wp.FieldValues["TimeSpent"] == null ? string.Empty : wp.FieldValues["TimeSpent"].ToString(),
-							WPStatus = wp.FieldValues[_column_Status] == null ? string.Empty : wp.FieldValues[_column_Status].ToString(),
-							WPTeam = team,
-							WPTitle = wp.FieldValues["Title"] == null ? string.Empty : wp.FieldValues["Title"].ToString(),
-							WPType = wp.FieldValues[_column_WpType] == null ? string.Empty : wp.FieldValues[_column_WpType].ToString(),
-							WPIterationId = iterationId,
-							WPIterationName = iterationName,
-							WPDependOn = dependOnWPIds
-						});
-					}
-				}
-			}
-
-			_lsvlocalData.SortPriority();
-			_lsvlocalData = _lsvlocalData
-				.OrderBy(d => d.FeatureShow)
-				.ThenBy(d => d.WPPriority)
-				.ToList();
-		}
-
-		private void LoadDailyTrack()
+		private void LoadDailyTrackTab()
 		{
 			var clonedData = new List<WPItemModel>();
-			_lsvlocalData.ForEach(l => clonedData.Add(l.DeepCopy()));
+			var currentWps = _service._currentWPLocalData;
+			currentWps.ForEach(l => clonedData.Add(l.DeepCopy()));
 			Daily_DataGridView.DataSource = clonedData;
 			Daily_Load_filter_combobox_data();
 		}
 
 		/// <summary>
-		/// Currently doesn't work because missing assignee
+		/// TODO: Currently doesn't work because missing assignee
 		/// </summary>
 		private void UnuseFollowingPlanTrack()
 		{
@@ -572,35 +511,35 @@ namespace CreateWorkPackages3
 			//	.WithPreview((_, data) => RenderPreview(data)).BehindCursor()
 			//	.To(target, MoveItems);
 
-			Services s = new Services();
-			string url = "https://localhost:44385/WeatherForecast";
-			var result = await s.Get<dynamic>(url);
+			//Services s = new Services();
+			//string url = "https://localhost:44385/WeatherForecast";
+			//var result = await s.Get<dynamic>(url);
 
 
 
-			var expectedWps = _lsvlocalData;
-			var expectedFeatures = new List<ToolKitFeatureModel>();
-			foreach (var item in _lsvlocalData)
-			{
-				if (!expectedFeatures.Any(f => f.Id == item.FeatureId.ToString() && f.Name == item.Feature))
-					expectedFeatures.Add(new ToolKitFeatureModel { Id = item.FeatureId.ToString(), Name = item.Feature });
-			}
-			
+			//var expectedWps = _lsvlocalData;
+			//var expectedFeatures = new List<ToolKitFeatureModel>();
+			//foreach (var item in _lsvlocalData)
+			//{
+			//	if (!expectedFeatures.Any(f => f.Id == item.FeatureId.ToString() && f.Name == item.Feature))
+			//		expectedFeatures.Add(new ToolKitFeatureModel { Id = item.FeatureId.ToString(), Name = item.Feature });
+			//}
 
-			url = "https://localhost:44385/toolkit/feature";
-			await s.Post<bool>(url, expectedFeatures);
 
-			url = "https://localhost:44385/toolkit/wp";
-			await s.Post<bool>(url, expectedWps);
+			//url = "https://localhost:44385/toolkit/feature";
+			//await s.Post<bool>(url, expectedFeatures);
 
-			url = "https://localhost:44385/toolkit/iteration";
-			await s.Post<bool>(url, _service._toolkitIterations);
+			//url = "https://localhost:44385/toolkit/wp";
+			//await s.Post<bool>(url, expectedWps);
 
-			url = "https://localhost:44385/toolkit/allocation";
-			await s.Post<bool>(url, _service._toolkitAllocationAdjustmentsModel);
+			//url = "https://localhost:44385/toolkit/iteration";
+			//await s.Post<bool>(url, _service._toolkitIterations);
 
-			url = "https://localhost:44385/toolkit/allocationadjustment";
-			await s.Post<bool>(url, _service._toolkitAllocationsModel);
+			//url = "https://localhost:44385/toolkit/allocation";
+			//await s.Post<bool>(url, _service._toolkitAllocationAdjustmentsModel);
+
+			//url = "https://localhost:44385/toolkit/allocationadjustment";
+			//await s.Post<bool>(url, _service._toolkitAllocationsModel);
 		}
 	}
 }

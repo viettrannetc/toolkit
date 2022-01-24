@@ -20,7 +20,7 @@ namespace CreateWorkPackages3
 	/// <summary>
 	/// Details tab
 	/// </summary>
-	public partial class Form1 : Form
+	public partial class IterationForm : Form
 	{
 		private DataTable GetAssignee()
 		{
@@ -50,12 +50,6 @@ namespace CreateWorkPackages3
 
 		private void BuildProgressTracking(List<WPItemModel> dataSource)
 		{
-			//var features = _service._features.ConvertToFeatures();
-			//var userstories = _service._us.ConvertToUserStory();
-			//var workpackages = _service._wps.ConvertToWorkpackage();
-			//var allocations = _service._allocations.ConvertToAllocation();
-			//var allocationAdjustments = _service._allocationadjustments.ConvertToAllocationAdjustment();
-
 			_wpItemsLocal = new List<WPItemModel>();
 			dataSource.ForEach(l => _wpItemsLocal.Add(l.DeepCopy()));
 
@@ -191,7 +185,7 @@ namespace CreateWorkPackages3
 			//Clean changes
 			tabDetailsPlan_GridView_Changes_ClearChanges();
 
-			BuildProgressTracking(_service._currentWPLocalData);
+			BuildProgressTracking(_lsvlocalData);
 		}
 
 		private void tabDetailsPlan_GridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -538,18 +532,13 @@ namespace CreateWorkPackages3
 			return result;
 		}
 
-		private void tabDetailsPlan_btn_open_planning_Click(object sender, EventArgs e)
-		{
-			OpenPlanningForm();
-		}
 
 		public delegate void SelectIteration(List<string> selectedIterations);
 
 		private void HideIterationRows(List<string> selectedIterations)
 		{
 			var filterData = new List<WPItemModel>();
-			var currentWps = _service._currentWPLocalData;
-			currentWps.ForEach(l => filterData.Add(l.DeepCopy()));
+			_lsvlocalData.ForEach(l => filterData.Add(l.DeepCopy()));
 			var selectedIteration = filterData.Where(wp => selectedIterations.Contains(wp.WPIterationName)).ToList();
 
 			BuildProgressTracking(selectedIteration);
